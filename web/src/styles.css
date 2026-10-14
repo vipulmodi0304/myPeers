@@ -1,0 +1,163 @@
+@import "@fontsource-variable/archivo/wdth.css";
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens: see docs/DESIGN.md */
+:root {
+  --paper: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --ink: #17203a;
+  --slate: #5a6479;
+  --line: #d9dee7;
+  --red: #d61f2c;
+  --red-soft: #fbe3e5;
+  --amber: #b26a00;
+  --amber-soft: #fdf0d9;
+  --green: #1f7a4d;
+  --highlight: #ffe36e;
+  --highlight-ink: #3d3200;
+  --focus: #2f5bd3;
+  --shadow: 0 1px 0 rgb(23 32 58 / 0.04), 0 8px 24px -12px rgb(23 32 58 / 0.18);
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #121826;
+  --surface: #1a2232;
+  --surface-2: #202a3d;
+  --ink: #e6ebf3;
+  --slate: #98a3b8;
+  --line: #2c374d;
+  --red: #ff4f5c;
+  --red-soft: #3a1d25;
+  --amber: #f0ad4b;
+  --amber-soft: #382b17;
+  --green: #4cc38a;
+  --highlight: #d9b93c;
+  --highlight-ink: #1e1800;
+  --focus: #7ea2ff;
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-slate: var(--slate);
+  --color-line: var(--line);
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-green: var(--green);
+  --color-highlight: var(--highlight);
+  --color-highlight-ink: var(--highlight-ink);
+  --color-focus: var(--focus);
+  --shadow-panel: var(--shadow);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    font-stretch: 100%;
+  }
+  ::selection {
+    background: var(--highlight);
+    color: var(--highlight-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Course codes are set condensed and heavy, like library shelf labels. */
+.course-code {
+  font-stretch: 72%;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.condensed {
+  font-stretch: 78%;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one recurring motion: a classmate arriving in the list. */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    background-color: var(--highlight);
+  }
+  60% {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.arrive {
+  animation: arrive 1.6s ease-out;
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.15);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-220px) scale(1);
+  }
+}
+.float-up {
+  animation: float-up 2.2s ease-out forwards;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--red) 0%, transparent);
+  }
+}
+.live-dot {
+  animation: live-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrive,
+  .float-up,
+  .live-dot {
+    animation: none !important;
+  }
+  .float-up {
+    display: none;
+  }
+}

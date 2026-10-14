@@ -150,8 +150,8 @@ export function messageRoutes(ctx: AppContext) {
     const message = toMessageDto(row!);
 
     // Push to the recipient, and to the sender's other tabs/devices.
-    ctx.realtime.toUser(other.id, "dm:new", message);
-    ctx.realtime.toUser(me.id, "dm:new", message);
+    ctx.realtime.toUser(other.id, "dm:new", { ...message, senderName: me.name });
+    ctx.realtime.toUser(me.id, "dm:new", { ...message, senderName: me.name });
     if (me.is_demo && demoBotIds().includes(other.id)) scheduleBotReply(ctx, other.id, me.id);
 
     res.status(201).json({ message });

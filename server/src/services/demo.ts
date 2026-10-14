@@ -132,7 +132,9 @@ export function scheduleBotReply(ctx: AppContext, botId: string, guestId: string
         "insert into direct_messages (sender_id, recipient_id, body) values ($1, $2, $3) returning id, created_at",
         [botId, guestId, body],
       );
+      const bot = await ctx.db.one<{ name: string }>("select name from users where id = $1", [botId]);
       ctx.realtime.toUser(guestId, "dm:new", {
+        senderName: bot?.name,
         id: msg!.id,
         senderId: botId,
         recipientId: guestId,
