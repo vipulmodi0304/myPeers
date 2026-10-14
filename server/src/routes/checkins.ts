@@ -4,6 +4,14 @@ import type { AppContext } from "../context.js";
 import { normalizeCourse } from "../lib/courses.js";
 import { getPeer, listLivePeers } from "../services/peers.js";
 
+/** The check-in as the client sees it (without the internal "world" flag). */
+async function myCheckIn(ctx: AppContext, userId: string) {
+  const peer = await getPeer(ctx, userId);
+  if (!peer) return null;
+  const { world: _world, ...dto } = peer;
+  return dto;
+}
+
 const COURSE_FORMAT = /^[A-Z]{3,4}\d? \d{3}[A-Z0-9]{0,3}$/;
 
 const checkInInput = z.object({
@@ -20,8 +28,7 @@ export function checkInRoutes(ctx: AppContext) {
   const router = Router();
 
   router.get("/check-in", async (req, res) => {
-    const peer = await getPeer(ctx, req.user!.id);
-    res.json({ checkIn: peer ? { ...peer, world: undefined } : null });
+    res.json({ checkIn: await myCheckIn(ctx, req.user!.id) });
   });
 
   // Create or update your check-in. Switching course restarts the "studying for" clock.
@@ -37,8 +44,7 @@ export function checkInRoutes(ctx: AppContext) {
       [req.user!.id, input.courseCode, input.topic, input.location, input.status],
     );
     await ctx.realtime.checkInChanged(req.user!.id);
-    const peer = await getPeer(ctx, req.user!.id);
-    res.json({ checkIn: { ...peer, world: undefined } });
+    res.json({ checkIn: await myCheckIn(ctx, req.user!.id) });
   });
 
   router.delete("/check-in", async (req, res) => {

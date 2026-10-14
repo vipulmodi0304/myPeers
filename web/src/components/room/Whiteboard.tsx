@@ -74,13 +74,13 @@ export function Whiteboard({ roomId, initialStrokes, emit, userId }: Props) {
     });
     ro.observe(el);
     return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {
     strokes.current = initialStrokes;
     redraw();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [initialStrokes]);
 
   useSocketEvent<{ roomId: string; stroke: Stroke }>("wb:draft", ({ roomId: r, stroke }) => {
