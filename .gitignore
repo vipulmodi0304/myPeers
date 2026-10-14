@@ -24,3 +24,10 @@ pnpm-debug.log*
 
 # Local artifacts
 structure.txt
+
+# v2
+uploads/
+dist/
+coverage/
+test-results/
+playwright-report/
