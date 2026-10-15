@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
 import { api } from "@/lib/api";
+import { courseVars } from "@/lib/courseColor";
 import { cn } from "@/lib/format";
 import { inputClass } from "./ui";
 
@@ -62,7 +63,7 @@ export function CourseInput({
         autoFocus={autoFocus}
         placeholder={placeholder}
         value={value}
-        className={cn(inputClass, "course-code text-[17px] uppercase placeholder:normal-case placeholder:font-semibold")}
+        className={cn(inputClass, "course-code text-[17px] uppercase placeholder:font-semibold placeholder:text-ink-3")}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
@@ -90,7 +91,7 @@ export function CourseInput({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-line bg-surface p-1 shadow-panel"
+          className="absolute z-30 mt-1 max-h-64 w-full min-w-40 overflow-auto rounded-lg border border-line bg-surface p-1 shadow-pop"
         >
           {options.map((c, i) => (
             <li
@@ -103,7 +104,7 @@ export function CourseInput({
                 pick(c);
               }}
               onMouseEnter={() => setActive(i)}
-              className={cn("course-code cursor-pointer rounded-md px-2.5 py-1.5 text-[16px]", i === active && "bg-highlight text-highlight-ink")}
+              style={courseVars(c)} className={cn("course-code cursor-pointer rounded-md px-2.5 py-1.5 text-[16px] text-course", i === active && "bg-surface-2")}
             >
               {c}
             </li>

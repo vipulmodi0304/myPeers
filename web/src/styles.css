@@ -1,64 +1,99 @@
-@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/hanken-grotesk/index.css";
+@import "@fontsource-variable/bricolage-grotesque/wdth.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens: see docs/DESIGN.md */
+/*
+ * Design tokens (see docs/DESIGN.md).
+ * The interface itself stays quiet; colour comes from courses. Every
+ * department has its own hue, the way students colour-code a planner.
+ */
 :root {
-  --paper: #eef1f5;
+  --canvas: #f7f7f5;
   --surface: #ffffff;
-  --surface-2: #f6f8fa;
-  --ink: #17203a;
-  --slate: #5a6479;
-  --line: #d9dee7;
-  --red: #d61f2c;
-  --red-soft: #fbe3e5;
-  --amber: #b26a00;
-  --amber-soft: #fdf0d9;
-  --green: #1f7a4d;
-  --highlight: #ffe36e;
-  --highlight-ink: #3d3200;
+  --surface-2: #f0f0ec;
+  --surface-3: #e8e8e3;
+  --ink: #1c1d22;
+  --ink-2: #4d5059;
+  --ink-3: #7b7e87;
+  --line: #e6e5e0;
+  --line-strong: #d2d1ca;
+  --brand: #e2363a;
+  --brand-soft: #fde4e3;
+  --green: #2e8552;
+  --amber: #a86400;
+  --amber-soft: #fbefd8;
   --focus: #2f5bd3;
-  --shadow: 0 1px 0 rgb(23 32 58 / 0.04), 0 8px 24px -12px rgb(23 32 58 / 0.18);
+  --pop: 0 1px 2px rgb(28 29 34 / 0.06), 0 12px 32px -12px rgb(28 29 34 / 0.22);
+
+  /* Course colours: text-safe foreground + soft tint */
+  --c0: #c2412d; --c0-soft: #fbe6e1;
+  --c1: #a35f00; --c1-soft: #faeed6;
+  --c2: #3c7a4c; --c2-soft: #e2efe4;
+  --c3: #12767a; --c3-soft: #dbefee;
+  --c4: #3557b3; --c4-soft: #e2e8f8;
+  --c5: #7a489d; --c5-soft: #eee4f5;
+  --c6: #b0386a; --c6-soft: #f8e1ea;
+  --c7: #66661c; --c7-soft: #eeeed7;
   color-scheme: light;
 }
 
 .dark {
-  --paper: #121826;
-  --surface: #1a2232;
-  --surface-2: #202a3d;
-  --ink: #e6ebf3;
-  --slate: #98a3b8;
-  --line: #2c374d;
-  --red: #ff4f5c;
-  --red-soft: #3a1d25;
-  --amber: #f0ad4b;
-  --amber-soft: #382b17;
-  --green: #4cc38a;
-  --highlight: #d9b93c;
-  --highlight-ink: #1e1800;
-  --focus: #7ea2ff;
-  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.7);
+  --canvas: #131417;
+  --surface: #1a1b1f;
+  --surface-2: #222328;
+  --surface-3: #2b2d33;
+  --ink: #ededea;
+  --ink-2: #b2b4ba;
+  --ink-3: #888b92;
+  --line: #2b2d32;
+  --line-strong: #3a3c42;
+  --brand: #ff5a5e;
+  --brand-soft: #3d1d20;
+  --green: #5cc48a;
+  --amber: #f0b04f;
+  --amber-soft: #382a14;
+  --focus: #8ba8ff;
+  --pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -12px rgb(0 0 0 / 0.7);
+
+  --c0: #ff8b74; --c0-soft: #3a221e;
+  --c1: #f1b75a; --c1-soft: #35290f;
+  --c2: #86c795; --c2-soft: #1d2f22;
+  --c3: #6bcfca; --c3-soft: #133133;
+  --c4: #95aff7; --c4-soft: #1e2742;
+  --c5: #c9a3ec; --c5-soft: #2e2240;
+  --c6: #f28db4; --c6-soft: #391e2a;
+  --c7: #d0d07a; --c7-soft: #2d2d16;
   color-scheme: dark;
 }
 
 @theme inline {
-  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
-  --color-paper: var(--paper);
+  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Hanken Grotesk Variable", sans-serif;
+  --color-canvas: var(--canvas);
+  --color-paper: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-ink: var(--ink);
-  --color-slate: var(--slate);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-slate: var(--ink-2);
   --color-line: var(--line);
-  --color-red: var(--red);
-  --color-red-soft: var(--red-soft);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-red: var(--brand);
+  --color-red-soft: var(--brand-soft);
+  --color-green: var(--green);
   --color-amber: var(--amber);
   --color-amber-soft: var(--amber-soft);
-  --color-green: var(--green);
-  --color-highlight: var(--highlight);
-  --color-highlight-ink: var(--highlight-ink);
   --color-focus: var(--focus);
-  --shadow-panel: var(--shadow);
+  /* The current course colour, set per element with style={courseVars(code)} */
+  --color-course: var(--course, var(--ink));
+  --color-course-soft: var(--course-soft, var(--surface-2));
+  --shadow-pop: var(--pop);
 }
 
 @layer base {
@@ -67,14 +102,13 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
     font-size: 15px;
     line-height: 1.5;
-    font-stretch: 100%;
+    font-feature-settings: "ss01", "cv11";
   }
   ::selection {
-    background: var(--highlight);
-    color: var(--highlight-ink);
+    background: color-mix(in srgb, var(--focus) 22%, transparent);
   }
   :focus-visible {
     outline: 2px solid var(--focus);
@@ -82,33 +116,42 @@
     border-radius: 6px;
   }
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role="button"]:not(:disabled),
+  [role="tab"],
+  [role="radio"] {
     cursor: pointer;
   }
 }
 
-/* Course codes are set condensed and heavy, like library shelf labels. */
+/* Display type: Bricolage, used for headlines and course codes only. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 90%;
+  letter-spacing: -0.02em;
+}
 .course-code {
-  font-stretch: 72%;
+  font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: 0.01em;
+  font-stretch: 75%;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .condensed {
-  font-stretch: 78%;
+  font-stretch: 85%;
 }
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* The one recurring motion: a classmate arriving in the list. */
+/* A classmate arriving in the list gets a brief wash of their course colour. */
 @keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(-6px);
-    background-color: var(--highlight);
+    transform: translateY(-4px);
+    background-color: var(--course-soft, var(--surface-2));
   }
-  60% {
+  40% {
     opacity: 1;
     transform: none;
   }
@@ -117,7 +160,22 @@
   }
 }
 .arrive {
-  animation: arrive 1.6s ease-out;
+  animation: arrive 1.8s ease-out;
+}
+
+/* The landing headline's course code sliding in. */
+@keyframes course-in {
+  from {
+    transform: translateY(55%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.course-in {
+  animation: course-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @keyframes float-up {
@@ -141,10 +199,10 @@
 @keyframes live-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 45%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--red) 0%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 0%, transparent);
   }
 }
 .live-dot {
@@ -153,7 +211,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .arrive,
-  .float-up,
+  .course-in,
   .live-dot {
     animation: none !important;
   }
