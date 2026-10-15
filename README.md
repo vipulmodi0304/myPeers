@@ -4,7 +4,7 @@
 
 You check in with the course you're working on (say `COMP 251`), what you're doing and where. Everyone else who's checked in shows up instantly, grouped by course, with yours at the top. From there you can message someone, share notes, or open a study room with a shared whiteboard and one Pomodoro timer the whole group follows.
 
-> **Try it without an account:** the live site has a **Try the demo** button. It drops you into a sandbox with sample classmates, an unread message and a study room, so you can see every feature in about two minutes.
+> **Live: [mypeers-production.up.railway.app](https://mypeers-production.up.railway.app)**. No account needed: press **Try the demo**. It drops you into a sandbox with sample classmates, an unread message and a study room, so you can see every feature in about two minutes.
 
 ![Landing page](docs/screenshots/landing.png)
 
