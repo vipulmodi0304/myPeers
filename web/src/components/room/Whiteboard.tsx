@@ -262,7 +262,7 @@ function ToolButton({ active, onClick, label, children }: { active: boolean; onC
       aria-label={label}
       aria-pressed={active}
       title={label}
-      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-slate hover:text-ink", active && "bg-ink text-paper hover:text-paper")}
+      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-ink-2 hover:text-ink", active && "bg-ink text-canvas hover:text-canvas")}
     >
       {children}
     </button>

@@ -1,63 +1,76 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRooms } from "@/components/AppShell";
 import { DoorOpen, Plus, Users } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CourseInput } from "@/components/CourseInput";
-import { Button, Dialog, Empty, Field, Input, Spinner } from "@/components/ui";
+import { Button, CourseTag, Dialog, Empty, Field, Input, PageHeader, Spinner } from "@/components/ui";
+import { courseVars } from "@/lib/courseColor";
 import { api, errorMessage } from "@/lib/api";
-import { shortTime } from "@/lib/format";
+import { cn, shortTime } from "@/lib/format";
 import { useMyCheckIn } from "@/lib/peers";
 import type { RoomSummary } from "@/lib/types";
 
 export default function RoomsPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["rooms"], queryFn: () => api.get<{ rooms: RoomSummary[] }>("/api/rooms") });
-  const [creating, setCreating] = useState(false);
-  const rooms = data?.rooms ?? [];
+  const { data: rooms = [], isLoading } = useRooms();
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreatingState] = useState(params.get("new") === "1");
+  const setCreating = (open: boolean) => {
+    setCreatingState(open);
+    if (!open && params.has("new")) setParams({}, { replace: true });
+  };
+  useEffect(() => {
+    if (params.get("new") === "1") setCreatingState(true);
+  }, [params]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-extrabold tracking-tight" style={{ fontStretch: "90%" }}>
-            Study rooms
-          </h1>
-          <p className="mt-1 max-w-md text-slate">A room is a shared space for your group: one whiteboard, one Pomodoro timer everyone follows, and a group chat.</p>
-        </div>
-        <Button onClick={() => setCreating(true)}>
-          <Plus className="size-4" /> New room
-        </Button>
-      </div>
+    <div className="mx-auto max-w-[920px] px-4 py-6 sm:px-8 sm:py-8">
+      <PageHeader
+        title="Rooms"
+        sub="A room gives your study group one whiteboard, one Pomodoro timer everyone follows, and a group chat."
+        actions={
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="size-4" /> New room
+          </Button>
+        }
+      />
 
       <JoinByCode />
 
-      <section aria-labelledby="my-rooms" className="mt-10">
-        <h2 id="my-rooms" className="font-bold">
+      <section aria-labelledby="my-rooms" className="mt-8">
+        <h2 id="my-rooms" className="pb-2 text-[13px] font-medium text-ink-3">
           Your rooms
         </h2>
         {isLoading ? (
-          <div className="grid h-24 place-items-center text-slate">
+          <div className="grid h-24 place-items-center text-ink-3">
             <Spinner className="size-5" />
           </div>
         ) : rooms.length === 0 ? (
-          <div className="mt-3 rounded-2xl border border-dashed border-line">
-            <Empty icon={<Users className="size-8" />} title="You're not in any rooms yet" action={<Button onClick={() => setCreating(true)}>Create a room</Button>}>
-              Create one and share its code with your study group, or join with a code someone sent you.
+          <div className="rounded-xl border border-dashed border-line-strong">
+            <Empty icon={<Users className="size-7" />} title="You're not in any rooms yet" action={<Button onClick={() => setCreating(true)}>Create a room</Button>}>
+              Create one and share its code with your study group, or open one with a code someone sent you.
             </Empty>
           </div>
         ) : (
-          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          <ul className="divide-y divide-line border-y border-line">
             {rooms.map((r) => (
               <li key={r.id}>
-                <Link to={`/app/rooms/${r.code}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-surface-2">
+                <Link to={`/app/rooms/${r.code}`} className="flex items-center gap-4 py-3 hover:bg-surface-2 sm:px-2">
+                  <span
+                    style={courseVars(r.courseCode)}
+                    className={cn("grid size-9 shrink-0 place-items-center rounded-lg", r.courseCode ? "bg-course-soft text-course" : "bg-surface-3 text-ink-2")}
+                  >
+                    <Users className="size-4" />
+                  </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{r.name}</span>
-                    <span className="text-[13px] text-slate">
+                    <span className="block truncate text-[14.5px] font-semibold">{r.name}</span>
+                    <span className="text-[13px] text-ink-2">
                       {r.memberCount} {r.memberCount === 1 ? "member" : "members"}
-                      {r.lastActivity ? `, last message ${shortTime(r.lastActivity)}` : ""}
+                      {r.lastActivity ? <span className="text-ink-3">, last message {shortTime(r.lastActivity)}</span> : null}
                     </span>
                   </span>
-                  {r.courseCode ? <span className="course-code text-[18px]">{r.courseCode}</span> : null}
-                  <span className="hidden rounded-md border border-line px-2 py-0.5 text-[13px] font-semibold tracking-wider text-slate tabular sm:block">{r.code}</span>
+                  {r.courseCode ? <CourseTag code={r.courseCode} size="sm" className="hidden sm:inline-flex" /> : null}
+                  <span className="hidden w-20 text-right text-[13px] tracking-wider text-ink-3 tabular sm:block">{r.code}</span>
                 </Link>
               </li>
             ))}
@@ -76,7 +89,7 @@ function JoinByCode() {
   const valid = /^[A-Z0-9]{6}$/.test(code);
   return (
     <form
-      className="mt-8 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-end"
+      className="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-canvas/60 p-4 sm:flex-row sm:items-end"
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) navigate(`/app/rooms/${code}`);
@@ -89,7 +102,7 @@ function JoinByCode() {
           onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
           placeholder="K7QX2M"
           autoComplete="off"
-          className="text-[17px] font-semibold tracking-[0.3em] uppercase tabular placeholder:tracking-[0.3em]"
+          className="text-[17px] font-semibold tracking-[0.2em] uppercase tabular placeholder:tracking-[0.2em]"
         />
       </Field>
       <Button type="submit" variant="secondary" disabled={!valid}>
@@ -131,7 +144,7 @@ function CreateRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
           <CourseInput id="room-course" value={course} onChange={setCourse} />
         </Field>
         {create.error ? (
-          <p role="alert" className="text-sm text-red">
+          <p role="alert" className="text-sm text-brand">
             {errorMessage(create.error)}
           </p>
         ) : null}

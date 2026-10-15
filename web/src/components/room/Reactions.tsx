@@ -24,11 +24,11 @@ export function Reactions({ roomId, emit }: { roomId: string; emit: (event: stri
         {floating.map((f) => (
           <span key={f.id} className="float-up absolute bottom-20 flex flex-col items-center" style={{ left: `${f.left}%` }}>
             <span className="text-4xl">{f.emoji}</span>
-            <span className="rounded bg-ink/80 px-1.5 text-[11px] font-semibold text-paper">{f.name}</span>
+            <span className="rounded bg-ink/80 px-1.5 text-[11px] font-semibold text-canvas">{f.name}</span>
           </span>
         ))}
       </div>
-      <div className="mx-auto mb-3 flex w-fit shrink-0 gap-0.5 rounded-full border border-line bg-surface p-1 shadow-panel" role="group" aria-label="Send a reaction">
+      <div className="mx-auto mb-3 flex w-fit shrink-0 gap-0.5 rounded-full border border-line bg-surface p-1 shadow-pop" role="group" aria-label="Send a reaction">
         {EMOJIS.map((e) => (
           <button key={e} onClick={() => emit("room:react", { emoji: e })} className="grid size-9 place-items-center rounded-full text-lg hover:bg-surface-2" aria-label={`React ${e}`}>
             {e}

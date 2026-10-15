@@ -99,12 +99,12 @@ export function RoomTimer({
       <section aria-label="Shared timer" className="flex items-center gap-3">
         <button
           onClick={() => action({ type: "mode", mode: timer.mode === "focus" ? "break" : "focus" })}
-          className={cn("rounded-md px-2 py-1 text-[12px] font-semibold", timer.mode === "focus" ? "bg-red-soft text-red" : "bg-surface-2 text-green")}
+          className={cn("rounded-md px-2 py-1 text-[12px] font-semibold", timer.mode === "focus" ? "bg-course-soft text-course" : "bg-surface-2 text-green")}
           aria-label={`Mode: ${timer.mode}. Switch mode`}
         >
           {timer.mode === "focus" ? "Focus" : "Break"}
         </button>
-        <p className={cn("text-[34px] leading-none font-extrabold tabular", done && "text-red")} style={{ fontStretch: "75%" }}>
+        <p className={cn("display text-[34px] leading-none tabular", done && "text-brand")} style={{ fontStretch: "75%" }}>
           {mmss(secs)}
         </p>
         <div className="ml-auto flex w-40 gap-1.5">
@@ -118,7 +118,7 @@ export function RoomTimer({
   }
 
   return (
-    <section aria-label="Shared timer" className="rounded-xl border border-line bg-surface p-4">
+    <section aria-label="Shared timer" className="rounded-xl border border-line bg-canvas/60 p-4">
       <div className="flex items-center justify-between gap-2">
         <div role="radiogroup" aria-label="Timer mode" className="inline-flex rounded-lg bg-surface-2 p-0.5">
           {(["focus", "break"] as const).map((m) => (
@@ -129,27 +129,27 @@ export function RoomTimer({
               onClick={() => timer.mode !== m && action({ type: "mode", mode: m })}
               className={cn(
                 "h-7 rounded-md px-2.5 text-[13px] font-semibold",
-                timer.mode === m ? "bg-surface text-ink shadow-sm" : "text-slate hover:text-ink",
+                timer.mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-2 hover:text-ink",
               )}
             >
               {m === "focus" ? "Focus 25" : "Break 5"}
             </button>
           ))}
         </div>
-        <span className="text-[12px] text-slate">Everyone sees this</span>
+        <span className="text-[12px] text-ink-2">Everyone sees this</span>
       </div>
 
       <p
-        className={cn("mt-3 text-[56px] leading-none font-extrabold tabular", done && "text-red")}
+        className={cn("display mt-3 text-[56px] leading-none tabular", done && "text-brand")}
         style={{ fontStretch: "75%" }}
         aria-live="off"
       >
         {mmss(secs)}
       </p>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-        <div className={cn("h-full rounded-full", timer.mode === "focus" ? "bg-red" : "bg-green")} style={{ width: `${Math.min(100, progress * 100)}%` }} />
+        <div className={cn("h-full rounded-full", timer.mode === "focus" ? "bg-course" : "bg-green")} style={{ width: `${Math.min(100, progress * 100)}%` }} />
       </div>
-      <p className="mt-2 min-h-5 text-[13px] text-slate" role="status">
+      <p className="mt-2 min-h-5 text-[13px] text-ink-2" role="status">
         {done
           ? timer.mode === "focus"
             ? "Focus round done. Take a break."

@@ -77,7 +77,7 @@ One Node process serves the React app, the REST API and the WebSocket server on 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Radix UI primitives, Socket.IO client
 - **Backend:** Node.js 22, Express 5, Socket.IO, PostgreSQL via `pg` with hand-written SQL migrations, zod validation, bcrypt, helmet, pino
 - **Testing:** Vitest + Supertest against a real Postgres, plus Socket.IO integration tests (39 tests)
-- **Ops:** Docker, GitHub Actions CI (lint, typecheck, tests, build), Railway
+- **Ops:** Docker, Railway
 
 ## Run it locally
 
@@ -131,7 +131,7 @@ docs/              design notes, deployment guide, screenshots
 
 ## History
 
-The first version was a 48-hour hackathon MVP built on Supabase (tagged [`v1-supabase`](../../tree/v1-supabase)). It was used by 15 to 20 students but had real problems: student IDs visible to every user, a polling design that wouldn't scale, half-wired features, and no tests. Version 2 is a rebuild with its own Node backend, a proper security model, realtime by WebSocket, and a redesigned interface.
+The first version was a 48-hour hackathon MVP built on Supabase (still in the commit history). It was used by 15 to 20 students but had real problems: student IDs visible to every user, a polling design that wouldn't scale, half-wired features, and no tests. Version 2 is a rebuild with its own Node backend, a proper security model, realtime by WebSocket, and a redesigned interface.
 
 ---
 

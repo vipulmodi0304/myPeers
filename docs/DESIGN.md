@@ -1,24 +1,27 @@
 # Design notes
 
-**Subject.** McGill students finding classmates who are studying the same course *right now*, and studying together. The course code (COMP 251, MATH 240) is how students identify what they're doing, so it is the core visual unit of the interface.
+**Subject.** McGill students finding classmates who are studying the same course *right now*, and studying together.
 
-**Audience.** McGill undergrads on a laptop in a library or on a phone between classes. Secondary: recruiters opening the demo for two minutes.
+**Audience.** McGill undergrads on a laptop in a library or on a phone between classes. Also recruiters opening the demo for two minutes.
+
+**Idea.** A calm, precise tool whose colour comes from courses. Students colour-code their courses in planners and calendars, so every course gets its own hue, and the same course is the same colour everywhere: its label, the avatars of people studying it, its rooms, a room's timer. The interface around that stays quiet.
 
 ## Tokens
 
-| Name        | Light     | Dark      | Use |
-|-------------|-----------|-----------|-----|
-| Paper       | `#EEF1F5` | `#121826` | Page background, cool like a winter library, not cream |
-| Surface     | `#FFFFFF` | `#1A2232` | Panels, inputs |
-| Ink         | `#17203A` | `#E6EBF3` | Text, primary buttons |
-| Slate       | `#5A6479` | `#98A3B8` | Secondary text |
-| Red         | `#D61F2C` | `#FF4F5C` | "Live" signal and the brand mark, used sparingly |
-| Highlighter | `#FFE36E` | `#D9B93C` | Marks *your* course, like a textbook highlighter |
+| Name | Light | Dark | Use |
+|---|---|---|---|
+| Canvas | `#F7F7F5` | `#131417` | Page and sidebar background |
+| Surface | `#FFFFFF` | `#1A1B1F` | Main panel, inputs |
+| Ink / Ink 2 / Ink 3 | `#1C1D22` / `#4D5059` / `#7B7E87` | `#EDEDEA` / `#B2B4BA` / `#888B92` | Text, secondary, tertiary |
+| Line | `#E6E5E0` | `#2B2D32` | Hairline dividers (no drop shadows on content) |
+| Brand red | `#E2363A` | `#FF5A5E` | Live dot and the one main action per page |
 
-**Type.** One family, Archivo, used across its width axis. Course codes are set condensed and heavy, like the spine labels on library shelves. Everything else is normal width. Tabular numbers for timers and counts.
+**Course colours** (`--c0` to `--c7`): tomato, amber, sage, teal, cornflower, plum, rose, olive. Each has a text-safe foreground and a soft tint for light and dark. Big courses that often appear together have hand-picked hues; everything else is hashed (`web/src/lib/courseColor.ts`).
 
-**Layout.** People are grouped under their course code (a "shelf"), your course first and highlighted. Rows, not cards. Rooms are a big whiteboard with a narrow side column for the timer, who's here, and chat.
+**Type.** Hanken Grotesk for the interface. Bricolage Grotesque, heavy and narrow, for headlines and course codes only. Tabular numbers for timers and counts.
 
-**Motion.** Only when something real happens: a classmate checking in slides into the list with a brief highlight; reactions float up over the whiteboard when someone sends one. `prefers-reduced-motion` turns both off.
+**Layout.** Sidebar plus one main panel. Lists are rows split by hairlines, not cards. Your check-in is a slim bar edged in your course colour.
 
-**Words.** Sentence case, plain verbs. The action keeps its name: "Check in" produces "Checked in". Empty states tell you what to do next.
+**Motion.** Only when something real happens: a classmate arriving gets a brief wash of their course colour; reactions float over the whiteboard; the landing headline's course code cycles. `prefers-reduced-motion` turns all three off.
+
+**Words.** Sentence case, plain verbs. An action keeps its name: "Check in" produces "Checked in". Empty states say what to do next.

@@ -11,19 +11,19 @@ export default function ProfilePage() {
   const { data: me } = useMe();
   if (!me) return null;
   return (
-    <div className="mx-auto max-w-xl space-y-10 px-4 py-8">
+    <div className="mx-auto max-w-[640px] space-y-10 px-4 py-6 sm:px-8 sm:py-8">
       <div className="flex items-center gap-4">
         <Avatar name={me.name} size={56} />
         <div>
-          <h1 className="text-[24px] font-extrabold tracking-tight">{me.name}</h1>
-          <p className="text-sm text-slate">{me.isDemo ? "Demo account" : me.email}</p>
+          <h1 className="display text-[26px] leading-tight">{me.name}</h1>
+          <p className="text-sm text-ink-2">{me.isDemo ? "Demo account" : me.email}</p>
         </div>
       </div>
       <NameForm me={me} />
       {me.isDemo ? (
-        <section className="rounded-2xl border border-line bg-surface p-5">
+        <section className="rounded-xl border border-line bg-surface p-5">
           <h2 className="font-bold">This is a demo account</h2>
-          <p className="mt-1 text-sm text-slate">It has no password and is deleted after a day. McGill students can create a real account in under a minute.</p>
+          <p className="mt-1 text-sm text-ink-2">It has no password and is deleted after a day. McGill students can create a real account in under a minute.</p>
           <Link to="/signup" className="mt-4 inline-block">
             <Button>Sign up with McGill email</Button>
           </Link>
@@ -42,7 +42,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <section className="border-t border-line pt-6">
       <h2 className="font-bold">{title}</h2>
-      {description ? <p className="mt-0.5 text-sm text-slate">{description}</p> : null}
+      {description ? <p className="mt-0.5 text-sm text-ink-2">{description}</p> : null}
       <div className="mt-4">{children}</div>
     </section>
   );

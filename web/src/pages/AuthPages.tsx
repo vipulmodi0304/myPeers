@@ -11,20 +11,20 @@ type AuthResponse = { user: Me; needsVerification?: boolean };
 
 function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: ReactNode; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="px-5 py-5">
+    <div className="flex min-h-dvh flex-col bg-canvas">
+      <header className="px-5 py-5 sm:px-8">
         <Link to="/" aria-label="myPeers home">
           <Logo />
         </Link>
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-16 sm:pt-14">
         <div className="w-full max-w-[400px]">
-          <h1 className="text-[28px] leading-tight font-extrabold tracking-tight" style={{ fontStretch: "90%" }}>
+          <h1 className="display text-[30px] leading-tight">
             {title}
           </h1>
-          {subtitle ? <p className="mt-2 text-slate">{subtitle}</p> : null}
-          <div className="mt-7">{children}</div>
-          {footer ? <div className="mt-8 text-sm text-slate">{footer}</div> : null}
+          {subtitle ? <p className="mt-2 text-ink-2">{subtitle}</p> : null}
+          <div className="mt-7 rounded-xl border border-line bg-surface p-5 sm:p-6">{children}</div>
+          {footer ? <div className="mt-8 text-sm text-ink-2">{footer}</div> : null}
         </div>
       </main>
     </div>
@@ -34,7 +34,7 @@ function AuthLayout({ title, subtitle, children, footer }: { title: string; subt
 function FormError({ error }: { error: unknown }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-lg bg-red-soft px-3 py-2.5 text-sm text-red">
+    <p role="alert" className="rounded-lg bg-brand-soft px-3 py-2.5 text-sm text-brand">
       {errorMessage(error)}
     </p>
   );
@@ -119,7 +119,7 @@ export function LoginPage() {
 function DemoDivider({ onClick, loading }: { onClick: () => void; loading: boolean }) {
   return (
     <div className="mt-8 border-t border-line pt-6">
-      <p className="text-sm text-slate">Not at McGill, or just looking around?</p>
+      <p className="text-sm text-ink-2">Not at McGill, or just looking around?</p>
       <Button variant="secondary" size="lg" className="mt-3 w-full" onClick={onClick} loading={loading}>
         Try the demo
       </Button>
@@ -175,7 +175,7 @@ export function SignupPage() {
           <Input id="password" type="password" autoComplete="new-password" required minLength={8} value={form.password} onChange={set("password")} />
         </Field>
         {takenEmail ? (
-          <p role="alert" className="rounded-lg bg-red-soft px-3 py-2.5 text-sm text-red">
+          <p role="alert" className="rounded-lg bg-brand-soft px-3 py-2.5 text-sm text-brand">
             You already have an account.{" "}
             <Link to="/login" className="font-semibold underline">
               Sign in instead

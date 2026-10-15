@@ -7,10 +7,11 @@ import { Reactions } from "@/components/room/Reactions";
 import { RoomChat } from "@/components/room/RoomChat";
 import { RoomTimer } from "@/components/room/RoomTimer";
 import { Whiteboard } from "@/components/room/Whiteboard";
-import { Avatar, Button, Empty, FullPageSpinner, Spinner } from "@/components/ui";
+import { Avatar, Button, CourseTag, Empty, FullPageSpinner, Spinner } from "@/components/ui";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { cn } from "@/lib/format";
+import { courseVars } from "@/lib/courseColor";
 import { useRoom, type RoomDetail } from "@/lib/room";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 
@@ -51,10 +52,10 @@ function JoinPrompt({ code, data }: { code: string; data: RoomDetail }) {
   });
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="rounded-2xl border border-line bg-surface p-6 text-center shadow-panel">
-        {data.room.courseCode ? <p className="course-code text-[32px] leading-none">{data.room.courseCode}</p> : null}
-        <h1 className="mt-3 text-xl font-extrabold">{data.room.name}</h1>
-        <p className="mt-1 text-sm text-slate">
+      <div className="rounded-xl border border-line bg-surface p-6 text-center">
+        {data.room.courseCode ? <CourseTag code={data.room.courseCode} size="lg" /> : null}
+        <h1 className="display mt-3 text-[24px]">{data.room.name}</h1>
+        <p className="mt-1 text-sm text-ink-2">
           {data.room.memberCount} {data.room.memberCount === 1 ? "member" : "members"}. Join to use the shared whiteboard, timer and chat.
         </p>
         <Button size="lg" className="mt-6 w-full" onClick={() => join.mutate()} loading={join.isPending}>
@@ -98,7 +99,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
   };
 
   const board = (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col bg-surface-2">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col bg-canvas">
       <div className="min-h-0 flex-1">
         <Whiteboard roomId={roomId} initialStrokes={room.initialStrokes ?? []} emit={room.emit} userId={me!.id} />
       </div>
@@ -117,13 +118,13 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
 
   const peoplePanel = (
     <section aria-label="People in this room">
-      <h2 className="text-[13px] font-semibold text-slate">
+      <h2 className="text-[13px] font-medium text-ink-3">
         {room.here.length} here now, {data.members.length} {data.members.length === 1 ? "member" : "members"}
       </h2>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
         {people.map((m) => (
           <li key={m.id} className={cn("flex items-center gap-2 text-sm", !hereSet.has(m.id) && "opacity-55")}>
-            <Avatar name={m.name} size={26} live={hereSet.has(m.id)} />
+            <Avatar name={m.name} size={26} live={hereSet.has(m.id)} course={data.room.courseCode} />
             {m.id === me?.id ? "You" : m.name.split(" ")[0]}
           </li>
         ))}
@@ -132,17 +133,17 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-surface px-4 py-3">
-        <Link to="/app/rooms" className="text-slate hover:text-ink" aria-label="All rooms">
+    <div className="flex h-full flex-col" style={courseVars(data.room.courseCode)}>
+      <header className="flex h-14 shrink-0 items-center gap-x-3 border-b border-line bg-surface px-4">
+        <Link to="/app/rooms" className="text-ink-2 hover:text-ink" aria-label="All rooms">
           <ArrowLeft className="size-5" />
         </Link>
         <div className="flex min-w-0 flex-1 items-baseline gap-3">
-          {data.room.courseCode ? <span className="course-code hidden shrink-0 text-[22px] leading-none sm:inline">{data.room.courseCode}</span> : null}
+          {data.room.courseCode ? <CourseTag code={data.room.courseCode} size="sm" className="hidden self-center sm:inline-flex" /> : null}
           <h1 className="truncate text-[17px] font-bold">{data.room.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="hidden text-[13px] text-slate sm:inline">
+          <span className="hidden text-[13px] text-ink-2 sm:inline">
             Code <strong className="tracking-wider text-ink tabular">{code}</strong>
           </span>
           <Button variant="secondary" size="sm" onClick={invite} aria-label="Copy invite link">
@@ -157,7 +158,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
       </header>
 
       {!room.entered || !room.timer || !room.initialStrokes ? (
-        <div className="grid flex-1 place-items-center text-slate">
+        <div className="grid flex-1 place-items-center text-ink-2">
           <span className="flex items-center gap-2 text-sm">
             <Spinner className="size-4" /> Connecting to the room
           </span>
@@ -165,7 +166,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
       ) : isDesktop ? (
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_340px]">
           {board}
-          <aside className="flex min-h-0 flex-col gap-5 border-l border-line bg-paper p-4">
+          <aside className="flex min-h-0 flex-col gap-5 border-l border-line bg-surface p-4">
             {timer}
             {peoplePanel}
             <RoomChat code={code} roomId={roomId} meId={me!.id} />
@@ -182,7 +183,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
                 role="tab"
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className={cn("flex-1 py-2.5 text-sm font-semibold text-slate", tab === t && "text-ink shadow-[inset_0_-2px_0_var(--ink)]")}
+                className={cn("flex-1 py-2.5 text-sm font-semibold text-ink-2", tab === t && "text-ink shadow-[inset_0_-2px_0_var(--ink)]")}
               >
                 {t === "board" ? "Whiteboard" : t === "chat" ? "Chat" : `People (${room.here.length})`}
               </button>

@@ -3,7 +3,7 @@ import { ArrowLeft, FileText, MessageCircle, Paperclip, SendHorizontal, X } from
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Avatar, Button, Empty, Spinner } from "@/components/ui";
+import { Avatar, Button, CourseTag, Empty, Spinner } from "@/components/ui";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { clock, cn, fileSize, shortTime } from "@/lib/format";
@@ -13,8 +13,8 @@ import type { Attachment, Conversation, Message, Thread } from "@/lib/types";
 export default function MessagesPage() {
   const { userId } = useParams();
   return (
-    <div className="mx-auto h-full max-w-6xl md:px-4 md:py-6">
-      <div className="grid h-full overflow-hidden border-line bg-surface md:grid-cols-[300px_minmax(0,1fr)] md:rounded-2xl md:border md:shadow-panel">
+    <div className="h-full">
+      <div className="grid h-full overflow-hidden md:grid-cols-[300px_minmax(0,1fr)]">
         <div className={cn("min-h-0 border-line md:border-r", userId ? "hidden md:block" : "block")}>
           <ConversationList activeId={userId} />
         </div>
@@ -48,38 +48,38 @@ function ConversationList({ activeId }: { activeId?: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <h1 className="border-b border-line px-4 py-4 text-lg font-extrabold tracking-tight">Messages</h1>
+      <h1 className="display px-5 pt-6 pb-3 text-[22px]">Messages</h1>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="grid h-32 place-items-center text-slate">
+          <div className="grid h-32 place-items-center text-ink-2">
             <Spinner className="size-5" />
           </div>
         ) : !data?.length ? (
-          <p className="px-4 py-8 text-sm text-slate">
+          <p className="px-5 py-6 text-[14px] text-ink-2">
             No messages yet. Tap Message next to anyone on the Study now page to start a conversation.
           </p>
         ) : (
-          <ul>
+          <ul className="px-2 pb-3">
             {data.map((c) => (
               <li key={c.user.id}>
                 <Link
                   to={`/app/messages/${c.user.id}`}
                   aria-current={activeId === c.user.id ? "page" : undefined}
-                  className={cn("flex items-center gap-3 px-4 py-3 hover:bg-surface-2", activeId === c.user.id && "bg-surface-2")}
+                  className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-surface-2", activeId === c.user.id && "bg-surface-3/70")}
                 >
-                  <Avatar name={c.user.name} size={40} live={c.user.live} />
+                  <Avatar name={c.user.name} size={36} live={c.user.live} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className={cn("truncate", c.unread ? "font-bold" : "font-semibold")}>{c.user.name}</span>
-                      <span className="shrink-0 text-[12px] text-slate">{shortTime(c.lastMessage.createdAt)}</span>
+                      <span className={cn("truncate text-[14.5px]", c.unread ? "font-semibold" : "font-medium")}>{c.user.name}</span>
+                      <span className="shrink-0 text-[12px] text-ink-3">{shortTime(c.lastMessage.createdAt)}</span>
                     </span>
                     <span className="flex items-center justify-between gap-2">
-                      <span className={cn("truncate text-[13px]", c.unread ? "text-ink" : "text-slate")}>
+                      <span className={cn("truncate text-[13px]", c.unread ? "text-ink" : "text-ink-2")}>
                         {c.lastMessage.fromMe ? "You: " : ""}
                         {c.lastMessage.preview}
                       </span>
                       {c.unread ? (
-                        <span className="min-w-5 shrink-0 rounded-full bg-red px-1.5 text-center text-[11px] leading-5 text-white tabular">{c.unread}</span>
+                        <span className="min-w-5 shrink-0 rounded-full bg-brand px-1.5 text-center text-[11px] leading-5 text-white tabular">{c.unread}</span>
                       ) : null}
                     </span>
                   </span>
@@ -183,21 +183,23 @@ function ThreadView({ otherId }: { otherId: string }) {
 
   return (
     <div className="flex min-h-0 w-full flex-col">
-      <header className="flex items-center gap-3 border-b border-line px-3 py-3 md:px-5">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-3 md:px-6">
         <Button variant="ghost" size="icon" className="md:hidden" aria-label="Back to messages" onClick={() => navigate("/app/messages")}>
           <ArrowLeft className="size-5" />
         </Button>
         {other ? (
           <>
-            <Avatar name={other.name} size={38} live={other.live} />
+            <Avatar name={other.name} size={36} live={other.live} course={other.checkIn?.courseCode} />
             <div className="min-w-0">
-              <p className="truncate font-bold">{other.name}</p>
-              <p className="truncate text-[13px] text-slate">
+              <p className="truncate text-[15px] font-semibold">{other.name}</p>
+              <p className="flex items-center gap-2 truncate text-[13px] text-ink-2">
                 {other.checkIn ? (
                   <>
-                    <span className="course-code text-[14px] text-ink">{other.checkIn.courseCode}</span>
-                    {other.checkIn.topic ? ` ${other.checkIn.topic}` : ""}
-                    {other.checkIn.location ? `, ${other.checkIn.location}` : ""}
+                    <CourseTag code={other.checkIn.courseCode} size="sm" />
+                    <span className="truncate">
+                      {other.checkIn.topic}
+                      {other.checkIn.location ? <span className="text-ink-3">{/^online$/i.test(other.checkIn.location) ? ", online" : ` in ${other.checkIn.location}`}</span> : null}
+                    </span>
                   </>
                 ) : other.live ? (
                   "Online"
@@ -229,7 +231,7 @@ function ThreadView({ otherId }: { otherId: string }) {
           </div>
         ) : null}
         {thread.isLoading ? (
-          <div className="grid h-full place-items-center text-slate">
+          <div className="grid h-full place-items-center text-ink-2">
             <Spinner className="size-5" />
           </div>
         ) : messages.length === 0 && other ? (
@@ -248,14 +250,14 @@ function ThreadView({ otherId }: { otherId: string }) {
               return (
                 <Fragment key={m.id}>
                   {newDay ? (
-                    <li className="py-3 text-center text-[12px] font-semibold text-slate">
+                    <li className="py-3 text-center text-[12px] font-semibold text-ink-2">
                       {new Date(m.createdAt).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
                     </li>
                   ) : null}
                   <li className={cn("flex flex-col", mine ? "items-end" : "items-start", !grouped && "pt-2")}>
                     <Bubble message={m} mine={mine} />
                     {!grouped || m.id === lastMineId ? (
-                      <span className="mt-0.5 px-1 text-[11px] text-slate">
+                      <span className="mt-0.5 px-1 text-[11px] text-ink-2">
                         {clock(m.createdAt)}
                         {m.id === lastMineId && m.readAt ? ", seen" : ""}
                       </span>
@@ -267,7 +269,7 @@ function ThreadView({ otherId }: { otherId: string }) {
           </ol>
         )}
         {typing && other ? (
-          <p className="mt-3 flex items-center gap-2 text-[13px] text-slate">
+          <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-2">
             <span className="inline-flex gap-0.5">
               <span className="size-1.5 animate-bounce rounded-full bg-slate [animation-delay:-0.2s]" />
               <span className="size-1.5 animate-bounce rounded-full bg-slate [animation-delay:-0.1s]" />
@@ -296,8 +298,8 @@ function Bubble({ message: m, mine }: { message: Message; mine: boolean }) {
   return (
     <div
       className={cn(
-        "max-w-[78%] rounded-2xl text-[15px] leading-snug break-words whitespace-pre-wrap",
-        mine ? "rounded-br-md bg-ink text-paper" : "rounded-bl-md border border-line bg-surface-2",
+        "max-w-[78%] rounded-[18px] text-[15px] leading-snug break-words whitespace-pre-wrap",
+        mine ? "rounded-br-md bg-ink text-canvas" : "rounded-bl-md bg-surface-2",
         a && isImage ? "overflow-hidden p-1" : "px-3.5 py-2",
       )}
     >
@@ -369,9 +371,9 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
     >
       {file ? (
         <div className="mb-2 inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-surface-2 py-1.5 pr-1.5 pl-3 text-sm">
-          <Paperclip className="size-3.5 shrink-0 text-slate" />
+          <Paperclip className="size-3.5 shrink-0 text-ink-2" />
           <span className="truncate">{file.name}</span>
-          <span className="shrink-0 text-slate">{fileSize(file.size)}</span>
+          <span className="shrink-0 text-ink-2">{fileSize(file.size)}</span>
           <Button type="button" variant="ghost" size="icon" className="size-6" aria-label="Remove file" onClick={() => setFile(null)}>
             <X className="size-3.5" />
           </Button>
@@ -422,7 +424,7 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
               if (canSend) send.mutate();
             }
           }}
-          className="min-h-10 flex-1 resize-none rounded-xl border border-line bg-surface px-3.5 py-2 text-[15px] placeholder:text-slate/70 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
+          className="min-h-10 flex-1 resize-none rounded-xl border border-line-strong bg-surface px-3.5 py-2 text-[15px] placeholder:text-ink-3 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
         />
         <Button type="submit" size="icon" className="h-10 w-10 rounded-xl" disabled={!canSend} loading={send.isPending} aria-label="Send">
           {send.isPending ? null : <SendHorizontal className="size-4.5" />}

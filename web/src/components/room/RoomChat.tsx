@@ -41,11 +41,11 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
     <section aria-label="Room chat" className="flex min-h-0 flex-1 flex-col">
       <div ref={list} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1 py-2" aria-live="polite">
         {isLoading ? (
-          <div className="grid h-20 place-items-center text-slate">
+          <div className="grid h-20 place-items-center text-ink-2">
             <Spinner className="size-4" />
           </div>
         ) : messages.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate">No messages yet. Say hi to the room.</p>
+          <p className="py-6 text-center text-sm text-ink-2">No messages yet. Say hi to the room.</p>
         ) : (
           messages.map((m, i) => {
             const prev = messages[i - 1];
@@ -57,7 +57,7 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
                   {grouped ? null : (
                     <p className="text-[13px]">
                       <span className="font-semibold">{m.senderId === meId ? "You" : m.senderName}</span>{" "}
-                      <span className="text-slate">{clock(m.createdAt)}</span>
+                      <span className="text-ink-2">{clock(m.createdAt)}</span>
                     </p>
                   )}
                   <p className="text-[14px] leading-snug break-words whitespace-pre-wrap">{m.body}</p>
@@ -84,7 +84,7 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
           onChange={(e) => setBody(e.target.value)}
           placeholder="Message the room"
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-[14px] placeholder:text-slate/70 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-[14px] placeholder:text-ink-3 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
         />
         <Button type="submit" size="icon" className="h-10 w-10" aria-label="Send" disabled={!body.trim()} loading={send.isPending}>
           {send.isPending ? null : <SendHorizontal className="size-4" />}
