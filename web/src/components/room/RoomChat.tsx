@@ -84,7 +84,7 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
           onChange={(e) => setBody(e.target.value)}
           placeholder="Message the room"
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-[14px] placeholder:text-ink-3 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
+          className="h-10 min-w-0 flex-1 rounded-full border-[1.5px] border-line-strong bg-surface px-4 text-[14px] placeholder:text-ink-3 focus:border-ink focus:ring-4 focus:ring-focus/15 focus:outline-none"
         />
         <Button type="submit" size="icon" className="h-10 w-10" aria-label="Send" disabled={!body.trim()} loading={send.isPending}>
           {send.isPending ? null : <SendHorizontal className="size-4" />}

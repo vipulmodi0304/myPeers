@@ -1,4 +1,5 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
+import { m } from "motion/react";
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { Button } from "@/components/ui";
 import { cn, mmss } from "@/lib/format";
@@ -99,12 +100,12 @@ export function RoomTimer({
       <section aria-label="Shared timer" className="flex items-center gap-3">
         <button
           onClick={() => action({ type: "mode", mode: timer.mode === "focus" ? "break" : "focus" })}
-          className={cn("rounded-md px-2 py-1 text-[12px] font-semibold", timer.mode === "focus" ? "bg-course-soft text-course" : "bg-surface-2 text-green")}
+          className={cn("rounded-full px-2.5 py-1 text-[12px] font-bold", timer.mode === "focus" ? "bg-course-soft text-course" : "bg-surface-2 text-green")}
           aria-label={`Mode: ${timer.mode}. Switch mode`}
         >
           {timer.mode === "focus" ? "Focus" : "Break"}
         </button>
-        <p className={cn("display text-[34px] leading-none tabular", done && "text-brand")} style={{ fontStretch: "75%" }}>
+        <p className={cn("display rounded-lg px-1 text-[36px] leading-none tabular", done && "timer-done text-brand")} style={{ fontStretch: "75%" }}>
           {mmss(secs)}
         </p>
         <div className="ml-auto flex w-40 gap-1.5">
@@ -118,21 +119,21 @@ export function RoomTimer({
   }
 
   return (
-    <section aria-label="Shared timer" className="rounded-xl border border-line bg-canvas/60 p-4">
+    <section aria-label="Shared timer" className={cn("rounded-[22px] border-[1.5px] border-line-strong bg-canvas/60 p-4", done && "timer-done")}>
       <div className="flex items-center justify-between gap-2">
-        <div role="radiogroup" aria-label="Timer mode" className="inline-flex rounded-lg bg-surface-2 p-0.5">
-          {(["focus", "break"] as const).map((m) => (
+        <div role="radiogroup" aria-label="Timer mode" className="inline-flex rounded-full bg-surface-2 p-1">
+          {(["focus", "break"] as const).map((mode) => (
             <button
-              key={m}
+              key={mode}
               role="radio"
-              aria-checked={timer.mode === m}
-              onClick={() => timer.mode !== m && action({ type: "mode", mode: m })}
-              className={cn(
-                "h-7 rounded-md px-2.5 text-[13px] font-semibold",
-                timer.mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-2 hover:text-ink",
-              )}
+              aria-checked={timer.mode === mode}
+              onClick={() => timer.mode !== mode && action({ type: "mode", mode })}
+              className={cn("relative h-7 rounded-full px-3 text-[13px] font-semibold", timer.mode === mode ? "text-ink" : "text-ink-2 hover:text-ink")}
             >
-              {m === "focus" ? "Focus 25" : "Break 5"}
+              {timer.mode === mode ? (
+                <m.span layoutId="timer-mode" className="absolute inset-0 rounded-full bg-surface shadow-[0_1px_3px_rgb(0_0_0/0.12)]" transition={{ type: "spring", stiffness: 500, damping: 36 }} />
+              ) : null}
+              <span className="relative">{mode === "focus" ? "Focus 25" : "Break 5"}</span>
             </button>
           ))}
         </div>
@@ -140,14 +141,17 @@ export function RoomTimer({
       </div>
 
       <p
-        className={cn("display mt-3 text-[56px] leading-none tabular", done && "text-brand")}
+        className={cn("display mt-3 text-[64px] leading-none tabular", done && "text-brand")}
         style={{ fontStretch: "75%" }}
         aria-live="off"
       >
         {mmss(secs)}
       </p>
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-        <div className={cn("h-full rounded-full", timer.mode === "focus" ? "bg-course" : "bg-green")} style={{ width: `${Math.min(100, progress * 100)}%` }} />
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full border-[1.5px] border-ink bg-surface" aria-hidden>
+        <div
+          className={cn("h-full transition-[width] duration-300 ease-linear", timer.mode === "focus" ? "bg-course-fill" : "bg-green")}
+          style={{ width: `${Math.min(100, progress * 100)}%` }}
+        />
       </div>
       <p className="mt-2 min-h-5 text-[13px] text-ink-2" role="status">
         {done

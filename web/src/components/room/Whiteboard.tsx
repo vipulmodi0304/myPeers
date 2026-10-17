@@ -237,7 +237,7 @@ export function Whiteboard({ roomId, initialStrokes, emit, userId }: Props) {
             onPointerUp={onUp}
             onPointerCancel={onUp}
             className={cn(
-              "absolute inset-0 size-full touch-none rounded-xl border border-line bg-white",
+              "absolute inset-0 size-full touch-none rounded-2xl border-[1.5px] border-line-strong bg-white",
               "bg-[radial-gradient(circle,#d6dbe4_1px,transparent_1px)] bg-[size:22px_22px]",
               tool === "eraser" ? "cursor-cell" : "cursor-crosshair",
             )}
@@ -262,7 +262,7 @@ function ToolButton({ active, onClick, label, children }: { active: boolean; onC
       aria-label={label}
       aria-pressed={active}
       title={label}
-      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-ink-2 hover:text-ink", active && "bg-ink text-canvas hover:text-canvas")}
+      className={cn("grid size-8 shrink-0 place-items-center rounded-full text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink", active && "bg-ink text-canvas hover:text-canvas")}
     >
       {children}
     </button>

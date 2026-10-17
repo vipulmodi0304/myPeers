@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowLeft, FileText, MessageCircle, Paperclip, SendHorizontal, X } from "lucide-react";
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar, Button, CourseTag, Empty, Spinner } from "@/components/ui";
@@ -14,7 +15,7 @@ export default function MessagesPage() {
   const { userId } = useParams();
   return (
     <div className="h-full">
-      <div className="grid h-full overflow-hidden md:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid h-full grid-cols-[minmax(0,1fr)] overflow-hidden md:grid-cols-[300px_minmax(0,1fr)]">
         <div className={cn("min-h-0 border-line md:border-r", userId ? "hidden md:block" : "block")}>
           <ConversationList activeId={userId} />
         </div>
@@ -48,7 +49,7 @@ function ConversationList({ activeId }: { activeId?: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <h1 className="display px-5 pt-6 pb-3 text-[22px]">Messages</h1>
+      <h1 className="display px-5 pt-7 pb-4 text-[32px] leading-none">Messages</h1>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="grid h-32 place-items-center text-ink-2">
@@ -59,13 +60,13 @@ function ConversationList({ activeId }: { activeId?: string }) {
             No messages yet. Tap Message next to anyone on the Study now page to start a conversation.
           </p>
         ) : (
-          <ul className="px-2 pb-3">
+          <ul className="space-y-0.5 px-2.5 pb-3">
             {data.map((c) => (
               <li key={c.user.id}>
                 <Link
                   to={`/app/messages/${c.user.id}`}
                   aria-current={activeId === c.user.id ? "page" : undefined}
-                  className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-surface-2", activeId === c.user.id && "bg-surface-3/70")}
+                  className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-surface-2", activeId === c.user.id && "bg-surface-2")}
                 >
                   <Avatar name={c.user.name} size={36} live={c.user.live} />
                   <span className="min-w-0 flex-1">
@@ -79,7 +80,7 @@ function ConversationList({ activeId }: { activeId?: string }) {
                         {c.lastMessage.preview}
                       </span>
                       {c.unread ? (
-                        <span className="min-w-5 shrink-0 rounded-full bg-brand px-1.5 text-center text-[11px] leading-5 text-white tabular">{c.unread}</span>
+                        <span className="min-w-5 shrink-0 rounded-full bg-brand px-1.5 text-center text-[11px] leading-5 font-bold text-white tabular">{c.unread}</span>
                       ) : null}
                     </span>
                   </span>
@@ -242,38 +243,47 @@ function ThreadView({ otherId }: { otherId: string }) {
           </div>
         ) : (
           <ol className="space-y-1.5">
-            {messages.map((m, i) => {
-              const mine = m.senderId === me?.id;
-              const prev = messages[i - 1];
-              const newDay = !prev || new Date(prev.createdAt).toDateString() !== new Date(m.createdAt).toDateString();
-              const grouped = prev && !newDay && prev.senderId === m.senderId && new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime() < 5 * 60_000;
-              return (
-                <Fragment key={m.id}>
-                  {newDay ? (
-                    <li className="py-3 text-center text-[12px] font-semibold text-ink-2">
-                      {new Date(m.createdAt).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
-                    </li>
-                  ) : null}
-                  <li className={cn("flex flex-col", mine ? "items-end" : "items-start", !grouped && "pt-2")}>
-                    <Bubble message={m} mine={mine} />
-                    {!grouped || m.id === lastMineId ? (
-                      <span className="mt-0.5 px-1 text-[11px] text-ink-2">
-                        {clock(m.createdAt)}
-                        {m.id === lastMineId && m.readAt ? ", seen" : ""}
+            {/* Messages already there when the thread opens stay still; new ones pop in from their side. */}
+            <AnimatePresence initial={false}>
+              {messages.map((msg, i) => {
+                const mine = msg.senderId === me?.id;
+                const prev = messages[i - 1];
+                const newDay = !prev || new Date(prev.createdAt).toDateString() !== new Date(msg.createdAt).toDateString();
+                const grouped =
+                  prev && !newDay && prev.senderId === msg.senderId && new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime() < 5 * 60_000;
+                return (
+                  <m.li
+                    key={msg.id}
+                    initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 520, damping: 32 }}
+                    style={{ transformOrigin: mine ? "bottom right" : "bottom left" }}
+                    className={cn("flex flex-col", mine ? "items-end" : "items-start", !grouped && "pt-2")}
+                  >
+                    {newDay ? (
+                      <p className="w-full py-3 text-center text-[12px] font-semibold text-ink-3">
+                        {new Date(msg.createdAt).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
+                      </p>
+                    ) : null}
+                    <Bubble message={msg} mine={mine} />
+                    {!grouped || msg.id === lastMineId ? (
+                      <span className="mt-0.5 px-1.5 text-[11px] text-ink-3">
+                        {clock(msg.createdAt)}
+                        {msg.id === lastMineId && msg.readAt ? ", seen" : ""}
                       </span>
                     ) : null}
-                  </li>
-                </Fragment>
-              );
-            })}
+                  </m.li>
+                );
+              })}
+            </AnimatePresence>
           </ol>
         )}
         {typing && other ? (
           <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-2">
-            <span className="inline-flex gap-0.5">
-              <span className="size-1.5 animate-bounce rounded-full bg-slate [animation-delay:-0.2s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-slate [animation-delay:-0.1s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-slate" />
+            <span className="inline-flex gap-[3px] rounded-full border-[1.5px] border-line-strong bg-surface px-2.5 py-2">
+              {[0, 0.15, 0.3].map((d) => (
+                <span key={d} className="typing-dot size-1.5 rounded-full bg-ink-2" style={{ animationDelay: `${d}s` }} />
+              ))}
             </span>
             {other.name.split(" ")[0]} is typing
           </p>
@@ -298,8 +308,8 @@ function Bubble({ message: m, mine }: { message: Message; mine: boolean }) {
   return (
     <div
       className={cn(
-        "max-w-[78%] rounded-[18px] text-[15px] leading-snug break-words whitespace-pre-wrap",
-        mine ? "rounded-br-md bg-ink text-canvas" : "rounded-bl-md bg-surface-2",
+        "max-w-[78%] rounded-[20px] text-[15px] leading-snug break-words whitespace-pre-wrap",
+        mine ? "rounded-br-[6px] bg-ink text-canvas" : "rounded-bl-[6px] border-[1.5px] border-line-strong bg-surface",
         a && isImage ? "overflow-hidden p-1" : "px-3.5 py-2",
       )}
     >
@@ -370,7 +380,7 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
       }}
     >
       {file ? (
-        <div className="mb-2 inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-surface-2 py-1.5 pr-1.5 pl-3 text-sm">
+        <div className="mb-2 inline-flex max-w-full items-center gap-2 rounded-full border-[1.5px] border-line-strong bg-surface-2 py-1 pr-1 pl-3.5 text-sm">
           <Paperclip className="size-3.5 shrink-0 text-ink-2" />
           <span className="truncate">{file.name}</span>
           <span className="shrink-0 text-ink-2">{fileSize(file.size)}</span>
@@ -424,9 +434,9 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
               if (canSend) send.mutate();
             }
           }}
-          className="min-h-10 flex-1 resize-none rounded-xl border border-line-strong bg-surface px-3.5 py-2 text-[15px] placeholder:text-ink-3 focus:border-focus focus:ring-3 focus:ring-focus/20 focus:outline-none"
+          className="min-h-11 flex-1 resize-none rounded-[22px] border-[1.5px] border-line-strong bg-surface px-4 py-2.5 text-[15px] placeholder:text-ink-3 focus:border-ink focus:ring-4 focus:ring-focus/15 focus:outline-none"
         />
-        <Button type="submit" size="icon" className="h-10 w-10 rounded-xl" disabled={!canSend} loading={send.isPending} aria-label="Send">
+        <Button type="submit" size="icon" className="size-11 shrink-0" disabled={!canSend} loading={send.isPending} aria-label="Send">
           {send.isPending ? null : <SendHorizontal className="size-4.5" />}
         </Button>
       </div>

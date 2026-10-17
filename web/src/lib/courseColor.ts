@@ -29,9 +29,12 @@ export function courseHue(code: string | null | undefined): number {
   return h % COURSE_HUES;
 }
 
-/** Inline style that sets --course / --course-soft for an element and its children. */
+/**
+ * Inline style that sets the current course's colours for an element and its
+ * children: --course (sticker fill), --course-ink (text) and --course-soft (tint).
+ */
 export function courseVars(code: string | null | undefined): CSSProperties {
   const i = courseHue(code);
   if (i < 0) return {};
-  return { "--course": `var(--c${i})`, "--course-soft": `var(--c${i}-soft)` } as CSSProperties;
+  return { "--course": `var(--c${i})`, "--course-ink": `var(--c${i}-ink)`, "--course-soft": `var(--c${i}-soft)` } as CSSProperties;
 }

@@ -28,9 +28,9 @@ export function Reactions({ roomId, emit }: { roomId: string; emit: (event: stri
           </span>
         ))}
       </div>
-      <div className="mx-auto mb-3 flex w-fit shrink-0 gap-0.5 rounded-full border border-line bg-surface p-1 shadow-pop" role="group" aria-label="Send a reaction">
+      <div className="sticker mx-auto mb-3 flex w-fit shrink-0 gap-0.5 rounded-full bg-surface p-1" role="group" aria-label="Send a reaction">
         {EMOJIS.map((e) => (
-          <button key={e} onClick={() => emit("room:react", { emoji: e })} className="grid size-9 place-items-center rounded-full text-lg hover:bg-surface-2" aria-label={`React ${e}`}>
+          <button key={e} onClick={() => emit("room:react", { emoji: e })} className="grid size-9 place-items-center rounded-full text-lg transition-transform hover:scale-125 hover:bg-surface-2 active:scale-90" aria-label={`React ${e}`}>
             {e}
           </button>
         ))}

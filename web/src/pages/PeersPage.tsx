@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, m } from "motion/react";
 import { MapPin, MessageCircle, Search, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,10 +37,10 @@ export default function PeersPage() {
         }
         actions={
           peers.length > 0 ? (
-            <label className="relative block w-full sm:w-60">
+            <label className="relative block w-full sm:w-72">
               <span className="sr-only">Search classmates</span>
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-ink-3" />
-              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" className="h-9 pl-8 text-[14px]" />
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search names, courses, places" className="h-10 rounded-full pl-9 text-[14px]" />
             </label>
           ) : null
         }
@@ -78,13 +79,13 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
   });
 
   return (
-    <section aria-labelledby="checkin-title" className="rounded-xl border border-line bg-canvas/60 p-4 sm:p-5">
-      <h2 id="checkin-title" className="text-[16px] font-semibold">
+    <section aria-labelledby="checkin-title" className="rounded-[22px] border-[1.5px] border-line-strong bg-canvas/60 p-4 sm:p-6">
+      <h2 id="checkin-title" className="display text-[24px] leading-tight">
         {current ? "Update your check-in" : "What are you studying?"}
       </h2>
       {!current ? <p className="mt-0.5 text-[14px] text-ink-2">Check in so classmates taking the same course can find you.</p> : null}
       <form
-        className="mt-4 grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)]"
+        className="mt-5 grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_minmax(0,1fr)]"
         onSubmit={(e) => {
           e.preventDefault();
           save.mutate();
@@ -108,8 +109,8 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
               onClick={() => setLocation(s)}
               aria-pressed={location === s}
               className={cn(
-                "h-7 rounded-md border px-2.5 text-[13px]",
-                location === s ? "border-ink bg-ink text-canvas" : "border-line-strong bg-surface text-ink-2 hover:text-ink",
+                "h-8 rounded-full border-[1.5px] px-3 text-[13px] font-medium transition-colors",
+                location === s ? "border-ink bg-ink text-canvas" : "border-line-strong bg-surface text-ink-2 hover:border-ink-3 hover:text-ink",
               )}
             >
               {s}
@@ -122,7 +123,7 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
           </p>
         ) : null}
         <div className="flex gap-2 pt-1 sm:col-span-3">
-          <Button type="submit" variant="brand" loading={save.isPending} disabled={!courseCode.trim()}>
+          <Button type="submit" size="lg" loading={save.isPending} disabled={!courseCode.trim()}>
             {current ? "Save changes" : "Check in"}
           </Button>
           {current ? (
@@ -159,12 +160,13 @@ function MyCheckIn({ checkIn, onEdit }: { checkIn: Peer; onEdit: () => void }) {
     <section
       aria-label="Your check-in"
       style={courseVars(checkIn.courseCode)}
-      className="flex flex-col gap-3 rounded-xl border border-line bg-surface py-3 pr-3 pl-4 shadow-[inset_3px_0_0_var(--course)] sm:flex-row sm:items-center"
+      className="sticker flex flex-col gap-3 rounded-[20px] bg-surface p-3.5 sm:flex-row sm:items-center sm:pl-4"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <CourseTag code={checkIn.courseCode} size="lg" />
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold">{checkIn.topic || "Studying"}</p>
+          <p className="text-[12px] font-semibold text-ink-3">You're checked in</p>
+          <p className="truncate text-[15.5px] font-semibold">{checkIn.topic || "Studying"}</p>
           <p className="flex items-center gap-3 text-[13px] text-ink-2">
             {checkIn.location ? (
               <span className="inline-flex items-center gap-1 truncate">
@@ -177,7 +179,7 @@ function MyCheckIn({ checkIn, onEdit }: { checkIn: Peer; onEdit: () => void }) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <div role="radiogroup" aria-label="Status" className="inline-flex rounded-lg bg-surface-2 p-0.5">
+        <div role="radiogroup" aria-label="Status" className="inline-flex rounded-full bg-surface-2 p-1">
           {(["studying", "break"] as const).map((s) => (
             <button
               key={s}
@@ -185,12 +187,12 @@ function MyCheckIn({ checkIn, onEdit }: { checkIn: Peer; onEdit: () => void }) {
               aria-checked={checkIn.status === s}
               disabled={setStatus.isPending}
               onClick={() => checkIn.status !== s && setStatus.mutate(s)}
-              className={cn(
-                "h-7 rounded-md px-2.5 text-[13px] font-medium transition-colors",
-                checkIn.status === s ? "bg-surface text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08)]" : "text-ink-2 hover:text-ink",
-              )}
+              className={cn("relative h-7 rounded-full px-3 text-[13px] font-semibold transition-colors", checkIn.status === s ? "text-ink" : "text-ink-2 hover:text-ink")}
             >
-              {s === "studying" ? "Studying" : "On a break"}
+              {checkIn.status === s ? (
+                <m.span layoutId="status-pill" className="absolute inset-0 rounded-full bg-surface shadow-[0_1px_3px_rgb(0_0_0/0.12)]" transition={{ type: "spring", stiffness: 500, damping: 36 }} />
+              ) : null}
+              <span className="relative">{s === "studying" ? "Studying" : "On a break"}</span>
             </button>
           ))}
         </div>
@@ -250,7 +252,7 @@ function PeerBoard({
 
   if (peers.length === 0) {
     return (
-      <div className="mt-8 rounded-xl border border-dashed border-line-strong">
+      <div className="mt-8 rounded-[22px] border-2 border-dashed border-line-strong">
         <Empty icon={<Users className="size-7" />} title="It's quiet right now">
           When classmates check in they show up here instantly, grouped by course. Send the link to your study group to get it going.
         </Empty>
@@ -261,7 +263,7 @@ function PeerBoard({
   return (
     <section aria-label="Classmates studying now" className="mt-8">
       {departments.length > 1 ? (
-        <div className="-mx-1 mb-5 flex flex-wrap gap-1" role="group" aria-label="Filter by department">
+        <div className="mb-6 flex flex-wrap gap-1.5" role="group" aria-label="Filter by department">
           <FilterButton active={dept === null} onClick={() => setDept(null)}>
             All <span className="text-ink-3 tabular">{peers.length}</span>
           </FilterButton>
@@ -276,23 +278,37 @@ function PeerBoard({
       {groups.length === 0 ? (
         <p className="py-10 text-center text-ink-2">No one matches “{query}”.</p>
       ) : (
-        <div className="space-y-7">
-          {groups.map((g) => (
-            <div key={g.courseCode} style={courseVars(g.courseCode)}>
-              <div className="flex items-baseline gap-2.5 pb-2">
-                <h3 className="course-code text-[22px] leading-none text-course">{g.courseCode}</h3>
-                <span className="text-[13px] text-ink-3">
-                  {g.mine ? "Your course, " : ""}
-                  {g.peers.length} {g.peers.length === 1 ? "person" : "people"}
-                </span>
-              </div>
-              <ul className="divide-y divide-line border-y border-line">
-                {g.peers.map((p) => (
-                  <PeerRow key={p.userId} peer={p} now={now} arrived={arrived.has(p.userId)} />
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="space-y-8">
+          <AnimatePresence initial={false}>
+            {groups.map((g) => (
+              <m.div
+                key={g.courseCode}
+                layout="position"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                style={courseVars(g.courseCode)}
+              >
+                <div className="flex items-center gap-2.5 pb-2.5">
+                  <h3>
+                    <CourseTag code={g.courseCode} size="md" />
+                  </h3>
+                  <span className="text-[13px] font-medium text-ink-3">
+                    {g.mine ? "Your course, " : ""}
+                    {g.peers.length} {g.peers.length === 1 ? "person" : "people"}
+                  </span>
+                </div>
+                <ul className="divide-y divide-line border-y border-line">
+                  <AnimatePresence initial={false}>
+                    {g.peers.map((p) => (
+                      <PeerRow key={p.userId} peer={p} now={now} arrived={arrived.has(p.userId)} />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </m.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </section>
@@ -305,8 +321,8 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium transition-colors",
-        active ? "bg-surface-3 text-ink" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+        "inline-flex h-8 items-center gap-1.5 rounded-full border-[1.5px] px-3 text-[13px] font-semibold transition-colors",
+        active ? "border-ink bg-ink text-canvas [&>span]:text-canvas/60" : "border-line-strong text-ink-2 hover:border-ink-3 hover:text-ink",
       )}
     >
       {children}
@@ -317,8 +333,16 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 function PeerRow({ peer, now, arrived }: { peer: Peer; now: number; arrived: boolean }) {
   const navigate = useNavigate();
   return (
-    <li className={cn("group flex items-center gap-3 py-2.5 sm:px-1", arrived && "arrive")}>
-      <Avatar name={peer.name} size={34} course={peer.courseCode} />
+    // New arrivals slide in and get a wash of their course colour; people who leave fade out.
+    <m.li
+      layout="position"
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.18 } }}
+      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+      className={cn("group flex items-center gap-3 py-3 sm:px-2", arrived && "arrive")}
+    >
+      <Avatar name={peer.name} size={38} course={peer.courseCode} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2.5">
           <span className="text-[14.5px] font-semibold">{peer.name}</span>
@@ -342,6 +366,6 @@ function PeerRow({ peer, now, arrived }: { peer: Peer; now: number; arrived: boo
         <MessageCircle className="size-4" />
         <span className="hidden sm:inline">Message</span>
       </Button>
-    </li>
+    </m.li>
   );
 }

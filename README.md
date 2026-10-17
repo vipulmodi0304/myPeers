@@ -74,7 +74,7 @@ One Node process serves the React app, the REST API and the WebSocket server on 
 
 ## Tech stack
 
-- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Radix UI primitives, Socket.IO client
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, Motion, React Router, TanStack Query, Radix UI primitives, Socket.IO client
 - **Backend:** Node.js 22, Express 5, Socket.IO, PostgreSQL via `pg` with hand-written SQL migrations, zod validation, bcrypt, helmet, pino
 - **Testing:** Vitest + Supertest against a real Postgres, plus Socket.IO integration tests (39 tests)
 - **Ops:** Docker, Railway

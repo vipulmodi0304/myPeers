@@ -12,18 +12,16 @@ type AuthResponse = { user: Me; needsVerification?: boolean };
 function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: ReactNode; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
-      <header className="px-5 py-5 sm:px-8">
+      <header className="px-4 py-4 sm:px-8 sm:py-5">
         <Link to="/" aria-label="myPeers home">
           <Logo />
         </Link>
       </header>
-      <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-16 sm:pt-14">
-        <div className="w-full max-w-[400px]">
-          <h1 className="display text-[30px] leading-tight">
-            {title}
-          </h1>
-          {subtitle ? <p className="mt-2 text-ink-2">{subtitle}</p> : null}
-          <div className="mt-7 rounded-xl border border-line bg-surface p-5 sm:p-6">{children}</div>
+      <main className="flex flex-1 items-start justify-center px-4 pt-4 pb-16 sm:pt-12">
+        <div className="w-full max-w-[420px]">
+          <h1 className="display text-[38px] leading-[0.95] text-balance sm:text-[44px]">{title}</h1>
+          {subtitle ? <p className="mt-3 text-[15.5px] text-ink-2">{subtitle}</p> : null}
+          <div className="sticker mt-7 rounded-[24px] bg-surface p-5 sm:p-7">{children}</div>
           {footer ? <div className="mt-8 text-sm text-ink-2">{footer}</div> : null}
         </div>
       </main>
@@ -34,7 +32,7 @@ function AuthLayout({ title, subtitle, children, footer }: { title: string; subt
 function FormError({ error }: { error: unknown }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-lg bg-brand-soft px-3 py-2.5 text-sm text-brand">
+    <p role="alert" className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand">
       {errorMessage(error)}
     </p>
   );
@@ -118,9 +116,9 @@ export function LoginPage() {
 
 function DemoDivider({ onClick, loading }: { onClick: () => void; loading: boolean }) {
   return (
-    <div className="mt-8 border-t border-line pt-6">
+    <div className="mt-7 border-t-[1.5px] border-dashed border-line-strong pt-6">
       <p className="text-sm text-ink-2">Not at McGill, or just looking around?</p>
-      <Button variant="secondary" size="lg" className="mt-3 w-full" onClick={onClick} loading={loading}>
+      <Button variant="sticker" size="lg" className="mt-3 w-full" onClick={onClick} loading={loading}>
         Try the demo
       </Button>
     </div>
@@ -175,7 +173,7 @@ export function SignupPage() {
           <Input id="password" type="password" autoComplete="new-password" required minLength={8} value={form.password} onChange={set("password")} />
         </Field>
         {takenEmail ? (
-          <p role="alert" className="rounded-lg bg-brand-soft px-3 py-2.5 text-sm text-brand">
+          <p role="alert" className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand">
             You already have an account.{" "}
             <Link to="/login" className="font-semibold underline">
               Sign in instead
@@ -205,7 +203,7 @@ function CodeInput({ value, onChange, id }: { value: string; onChange: (v: strin
       maxLength={6}
       value={value}
       onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
-      className="h-14 text-center text-[28px] font-bold tracking-[0.5em] tabular"
+      className="course-code h-16 text-center text-[34px] tracking-[0.45em]"
       placeholder="······"
     />
   );

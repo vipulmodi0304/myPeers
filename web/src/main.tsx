@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LazyMotion, MotionConfig } from "motion/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
@@ -22,11 +23,16 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      {/* "user": motion follows the device's reduce-motion setting everywhere. */}
+      <MotionConfig reducedMotion="user">
+        <LazyMotion strict features={() => import("./lib/motionFeatures").then((m) => m.default)}>
+          <RouterProvider router={router} />
+        </LazyMotion>
+      </MotionConfig>
       <Toaster
         position="bottom-right"
         toastOptions={{
-          className: "!bg-surface !text-ink !border-line !font-sans !rounded-xl",
+          className: "!bg-surface !text-ink !border-2 !border-ink !font-sans !rounded-2xl !shadow-[3px_3px_0_var(--hard)]",
         }}
       />
     </QueryClientProvider>
