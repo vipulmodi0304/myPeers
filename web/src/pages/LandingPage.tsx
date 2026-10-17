@@ -217,7 +217,7 @@ function CyclingChip() {
           key={code}
           initial={{ y: "70%", opacity: 0, rotate: -9 }}
           animate={{ y: 0, opacity: 1, rotate: -2 }}
-          exit={{ y: "-70%", opacity: 0, rotate: 5 }}
+          exit={{ y: "-35%", opacity: 0, rotate: 5, transition: { duration: 0.14, ease: "easeIn" } }}
           transition={spring}
           style={{ ...courseVars(code), boxShadow: "0.05em 0.05em 0 var(--hard)" } as CSSProperties}
           className="inline-block rounded-[0.12em] border-[0.035em] border-ink bg-course-fill px-[0.12em] whitespace-nowrap text-white"
