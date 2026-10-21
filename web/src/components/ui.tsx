@@ -1,13 +1,17 @@
 import { Dialog as RDialog } from "radix-ui";
 import { X } from "lucide-react";
-import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type CSSProperties, type InputHTMLAttributes, type ReactNode } from "react";
 import { courseVars } from "@/lib/courseColor";
 import { cn, initials } from "@/lib/format";
 
 /* ---------- Button ---------- */
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "brand" | "sticker" | "secondary" | "ghost" | "danger" | "red";
+  /**
+   * primary: a swipe of yellow highlighter, for the one main action on a screen.
+   * secondary: a ruled box. ghost: text only. danger: red pen. red: solid, for confirming a delete.
+   */
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "red";
   size?: "sm" | "md" | "lg" | "icon";
   loading?: boolean;
 };
@@ -20,22 +24,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap transition-colors duration-150",
+        "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-colors duration-150",
         "disabled:cursor-not-allowed disabled:opacity-45",
         {
-          // Primary and sticker buttons are physical: they lift on hover and sink into their shadow when pressed.
-          primary: "press border-2 border-ink bg-ink text-canvas shadow-hard-sm",
-          brand: "press border-2 border-ink bg-ink text-canvas shadow-hard-sm",
-          sticker: "press border-2 border-ink bg-surface text-ink shadow-hard-sm",
-          red: "border-2 border-transparent bg-brand text-white hover:bg-brand/90",
-          secondary: "border-2 border-line-strong bg-surface text-ink hover:border-ink-3",
-          ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-          danger: "text-brand hover:bg-brand-soft",
+          primary: "btn-ink font-bold",
+          secondary: "rounded-lg border-[1.5px] border-rule-strong bg-paper text-ink hover:border-ink hover:bg-paper-2",
+          ghost: "rounded-lg text-ink-2 hover:bg-paper-2 hover:text-ink",
+          danger: "rounded-lg text-red hover:bg-red-soft",
+          red: "rounded-lg bg-red text-white hover:bg-red/90",
         }[variant],
         {
-          sm: "h-8 px-3.5 text-[13px]",
-          md: "h-10 px-4.5 text-[14px]",
+          sm: "h-8 px-3 text-[13px]",
+          md: "h-10 px-4 text-[14px]",
           lg: "h-12 px-6 text-[15.5px]",
           icon: "size-10 p-0",
         }[size],
@@ -52,9 +54,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 /* ---------- Inputs ---------- */
 
 export const inputClass =
-  "w-full rounded-xl border-[1.5px] border-line-strong bg-surface px-3.5 h-11 text-[15px] text-ink placeholder:text-ink-3 " +
-  "focus:outline-none focus:border-ink focus:ring-4 focus:ring-focus/15 transition-[border,box-shadow] duration-150 " +
-  "aria-[invalid=true]:border-brand";
+  "w-full rounded-lg border-[1.5px] border-rule-strong bg-paper px-3.5 h-11 text-[15px] text-ink placeholder:text-ink-3 " +
+  "hover:border-ink-3 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-pen/20 transition-[border,box-shadow] duration-150 " +
+  "aria-[invalid=true]:border-red";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },
@@ -85,7 +87,7 @@ export function Field({
       </label>
       {children}
       {error ? (
-        <p className="text-[13px] text-brand" role="alert">
+        <p className="text-[13px] font-medium text-red" role="alert">
           {error}
         </p>
       ) : hint ? (
@@ -115,8 +117,8 @@ export function FullPageSpinner() {
 }
 
 /**
- * Initials avatar. Given a course, it takes that course's colour, so you can
- * tell at a glance who is studying what. Without one it stays neutral.
+ * Initials avatar. Given a course, it takes a wash of that course's ink, so
+ * you can tell at a glance who is studying what. Without one it stays neutral.
  */
 export function Avatar({
   name,
@@ -135,17 +137,17 @@ export function Avatar({
     <span className={cn("relative inline-flex shrink-0", className)} style={{ width: size, height: size, ...courseVars(course) }}>
       <span
         className={cn(
-          "inline-flex size-full items-center justify-center rounded-full font-semibold",
-          course ? "bg-course-soft text-course" : "bg-surface-3 text-ink-2",
+          "inline-flex size-full items-center justify-center rounded-full font-bold",
+          course ? "bg-course-soft text-course" : "bg-paper-2 text-ink-2 ring-1 ring-rule ring-inset",
         )}
-        style={{ fontSize: Math.round(size * 0.38), letterSpacing: "0.01em" }}
+        style={{ fontSize: Math.round(size * 0.37), fontVariationSettings: '"wdth" 110' }}
         aria-hidden
       >
         {initials(name)}
       </span>
       {live ? (
         <span
-          className="absolute -right-px -bottom-px rounded-full border-2 border-surface bg-green"
+          className="absolute -right-px -bottom-px rounded-full border-2 border-paper bg-live"
           style={{ width: Math.max(9, size * 0.3), height: Math.max(9, size * 0.3) }}
           aria-label="Online"
         />
@@ -154,29 +156,33 @@ export function Avatar({
   );
 }
 
-/** A course code printed as a sticker in its course colour. */
+/** A course code, highlighted in its course's ink. */
 export function CourseTag({
   code,
   size = "md",
   className,
   quiet,
+  swipe,
 }: {
   code: string;
   size?: "sm" | "md" | "lg";
   className?: string;
-  /** Tinted instead of filled, for places where many tags sit together. */
+  /** Half-height swipe in the course ink, for places where many codes sit together. */
   quiet?: boolean;
+  /** Draw the band in, for something that just happened. */
+  swipe?: boolean;
 }) {
   return (
     <span
       style={courseVars(code)}
       className={cn(
-        "course-code inline-flex items-center whitespace-nowrap",
-        quiet ? "bg-course-soft text-course" : "bg-course-fill text-white",
+        "code hl inline-block whitespace-nowrap",
+        quiet && "hl-low",
+        swipe && "swipe",
         {
-          sm: "rounded-[5px] px-1.5 py-px text-[13px]",
-          md: "rounded-md px-2 py-0.5 text-[16px]",
-          lg: "rounded-lg px-2.5 py-1 text-[22px] leading-none",
+          sm: "text-[12.5px]",
+          md: "text-[14.5px]",
+          lg: "text-[20px]",
         }[size],
         className,
       )}
@@ -186,29 +192,29 @@ export function CourseTag({
   );
 }
 
-/** Studying: a small live dot. On a break: amber words. No pill. */
+/** Studying: a small live dot. On a break: amber words. */
 export function StatusPill({ status }: { status: "studying" | "break" }) {
   return status === "studying" ? (
     <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
-      <span className="live-dot size-1.5 rounded-full bg-green" />
+      <span className="live-dot size-1.5 rounded-full bg-live" />
       Studying
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-amber">
-      <span className="size-1.5 rounded-full bg-amber" />
+    <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-warn">
+      <span className="size-1.5 rounded-full bg-warn" />
       On a break
     </span>
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+/** The wordmark: "my" in toner, "Peers" highlighted in yellow. */
+export function Logo({ className, size = 22 }: { className?: string; size?: number }) {
   return (
-    <span className={cn("inline-flex items-center gap-2 text-ink", className)}>
-      <svg viewBox="0 0 32 20" className="h-[17px] w-auto" aria-hidden>
-        <circle cx="10" cy="10" r="8.5" className="fill-ink" />
-        <circle cx="22" cy="10" r="8.5" className="fill-brand stroke-ink" strokeWidth="2" />
-      </svg>
-      <span className="display text-[21px] leading-none">myPeers</span>
+    <span
+      className={cn("inline-flex items-baseline leading-none font-extrabold text-ink", className)}
+      style={{ fontSize: size, fontVariationSettings: '"wdth" 112', letterSpacing: "-0.025em" } as CSSProperties}
+    >
+      my<span className="hl" style={{ "--hl": "var(--you)" } as CSSProperties}>Peers</span>
     </span>
   );
 }
@@ -216,9 +222,9 @@ export function Logo({ className }: { className?: string }) {
 export function Empty({ icon, title, children, action }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
-      {icon ? <div className="mb-4 grid size-14 place-items-center rounded-full bg-surface-2 text-ink-2">{icon}</div> : null}
-      <p className="display text-[22px] leading-tight">{title}</p>
-      {children ? <div className="mt-1 max-w-sm text-[14px] text-ink-2">{children}</div> : null}
+      {icon ? <div className="mb-4 text-ink-3">{icon}</div> : null}
+      <p className="heading text-[22px]">{title}</p>
+      {children ? <div className="mt-1.5 max-w-sm text-[14px] text-ink-2">{children}</div> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -227,10 +233,10 @@ export function Empty({ icon, title, children, action }: { icon?: ReactNode; tit
 /** Page title row used across the app. */
 export function PageHeader({ title, sub, actions }: { title: string; sub?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b-2 border-ink pb-4">
       <div className="min-w-0">
-        <h1 className="display text-[32px] leading-none sm:text-[38px]">{title}</h1>
-        {sub ? <p className="mt-2 text-[14.5px] text-ink-2">{sub}</p> : null}
+        <h1 className="title text-[34px] sm:text-[42px]">{title}</h1>
+        {sub ? <p className="mt-2.5 text-[14.5px] text-ink-2">{sub}</p> : null}
       </div>
       {actions ? <div className="flex w-full items-center gap-2 sm:w-auto">{actions}</div> : null}
     </div>
@@ -257,18 +263,18 @@ export function Dialog({
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Portal>
-        <RDialog.Overlay className="anim-overlay fixed inset-0 z-40 bg-[#100d16]/45" />
+        <RDialog.Overlay className="anim-overlay fixed inset-0 z-40 bg-[#0e0f11]/40" />
         <RDialog.Content
           className={cn(
             "fixed top-1/2 left-1/2 z-50 w-[calc(100vw-32px)] max-w-md -translate-x-1/2 -translate-y-1/2",
-            "anim-dialog rounded-2xl border-2 border-ink bg-surface p-5 shadow-hard-lg focus:outline-none sm:p-6",
+            "anim-dialog rounded-[14px] border border-rule-strong bg-paper p-5 shadow-sheet focus:outline-none sm:p-6",
             className,
           )}
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <RDialog.Title className="display text-[24px] leading-tight">{title}</RDialog.Title>
-              {description ? <RDialog.Description className="mt-0.5 text-[14px] text-ink-2">{description}</RDialog.Description> : null}
+              <RDialog.Title className="heading text-[22px]">{title}</RDialog.Title>
+              {description ? <RDialog.Description className="mt-1 text-[14px] text-ink-2">{description}</RDialog.Description> : null}
             </div>
             <RDialog.Close asChild>
               <Button variant="ghost" size="icon" aria-label="Close" className="-mt-1.5 -mr-2">

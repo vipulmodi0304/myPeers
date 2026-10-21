@@ -38,7 +38,7 @@ export default function RoomsPage() {
       <JoinByCode />
 
       <section aria-labelledby="my-rooms" className="mt-8">
-        <h2 id="my-rooms" className="pb-3 text-[13px] font-semibold text-ink-3">
+        <h2 id="my-rooms" className="heading pb-3 text-[20px]">
           Your rooms
         </h2>
         {isLoading ? (
@@ -46,31 +46,31 @@ export default function RoomsPage() {
             <Spinner className="size-5" />
           </div>
         ) : rooms.length === 0 ? (
-          <div className="rounded-[22px] border-2 border-dashed border-line-strong">
+          <div className="rounded-xl border-[1.5px] border-dashed border-rule-strong">
             <Empty icon={<Users className="size-7" />} title="You're not in any rooms yet" action={<Button onClick={() => setCreating(true)}>Create a room</Button>}>
               Create one and share its code with your study group, or open one with a code someone sent you.
             </Empty>
           </div>
         ) : (
-          <ul className="space-y-1">
+          <ul className="divide-y divide-rule border-y border-rule">
             {rooms.map((r) => (
               <li key={r.id}>
-                <Link to={`/app/rooms/${r.code}`} className="flex items-center gap-4 rounded-2xl px-2 py-3 transition-colors hover:bg-surface-2 sm:px-3">
+                <Link to={`/app/rooms/${r.code}`} className="group flex items-center gap-4 px-1 py-3.5 transition-colors hover:bg-paper-2 sm:px-2">
                   <span
                     style={courseVars(r.courseCode)}
-                    className={cn("grid size-11 shrink-0 place-items-center rounded-full", r.courseCode ? "bg-course-fill text-white" : "bg-surface-3 text-ink-2")}
+                    className={cn("grid size-10 shrink-0 place-items-center rounded-full", r.courseCode ? "bg-course-soft text-course" : "bg-paper-2 text-ink-2")}
                   >
                     <Users className="size-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15.5px] font-semibold">{r.name}</span>
+                    <span className="block truncate text-[15.5px] font-semibold group-hover:underline">{r.name}</span>
                     <span className="text-[13px] text-ink-2">
                       {r.memberCount} {r.memberCount === 1 ? "member" : "members"}
                       {r.lastActivity ? <span className="text-ink-3">, last message {shortTime(r.lastActivity)}</span> : null}
                     </span>
                   </span>
                   {r.courseCode ? <CourseTag code={r.courseCode} size="sm" className="hidden sm:inline-flex" /> : null}
-                  <span className="hidden w-20 text-right text-[13px] font-semibold tracking-wider text-ink-3 tabular sm:block">{r.code}</span>
+                  <span className="code hidden w-20 text-right text-[13px] tracking-wider text-ink-3 sm:block">{r.code}</span>
                 </Link>
               </li>
             ))}
@@ -89,7 +89,7 @@ function JoinByCode() {
   const valid = /^[A-Z0-9]{6}$/.test(code);
   return (
     <form
-      className="mt-6 flex flex-col gap-3 rounded-[22px] border-[1.5px] border-line-strong bg-canvas/60 p-4 sm:flex-row sm:items-end sm:p-5"
+      className="mt-6 flex flex-col gap-3 rounded-xl bg-paper-2 p-4 sm:flex-row sm:items-end sm:p-5"
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) navigate(`/app/rooms/${code}`);
@@ -102,10 +102,10 @@ function JoinByCode() {
           onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
           placeholder="K7QX2M"
           autoComplete="off"
-          className="text-[17px] font-semibold tracking-[0.2em] uppercase tabular placeholder:tracking-[0.2em]"
+          className="code text-[17px] tracking-[0.2em] uppercase placeholder:tracking-[0.2em]"
         />
       </Field>
-      <Button type="submit" variant="sticker" disabled={!valid}>
+      <Button type="submit" variant="secondary" disabled={!valid}>
         <DoorOpen className="size-4" /> Open room
       </Button>
     </form>
@@ -144,7 +144,7 @@ function CreateRoomDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
           <CourseInput id="room-course" value={course} onChange={setCourse} />
         </Field>
         {create.error ? (
-          <p role="alert" className="text-sm text-brand">
+          <p role="alert" className="text-sm font-medium text-red">
             {errorMessage(create.error)}
           </p>
         ) : null}

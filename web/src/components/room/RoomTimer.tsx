@@ -1,6 +1,5 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
-import { m } from "motion/react";
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
 import { Button } from "@/components/ui";
 import { cn, mmss } from "@/lib/format";
 import type { TimerState } from "@/lib/types";
@@ -65,6 +64,10 @@ export function RoomTimer({
   const action = (a: Record<string, unknown>) => emit("timer:action", { action: a });
   const done = secs === 0;
   const progress = 1 - secs / timer.durationSec;
+  // Under ~2% the band would read as a stray cursor, so it waits until it can read as ink.
+  const pct = done ? 100 : Math.min(100, Math.max(0, progress * 100));
+  const fill = pct < 2 ? 0 : pct;
+  const band = timer.mode === "focus" ? "var(--course, var(--you))" : "color-mix(in srgb, var(--live) 45%, var(--paper))";
 
   useEffect(() => {
     const base = "myPeers";
@@ -100,14 +103,24 @@ export function RoomTimer({
       <section aria-label="Shared timer" className="flex items-center gap-3">
         <button
           onClick={() => action({ type: "mode", mode: timer.mode === "focus" ? "break" : "focus" })}
-          className={cn("rounded-full px-2.5 py-1 text-[12px] font-bold", timer.mode === "focus" ? "bg-course-soft text-course" : "bg-surface-2 text-green")}
+          className="text-[13px] font-semibold"
           aria-label={`Mode: ${timer.mode}. Switch mode`}
         >
-          {timer.mode === "focus" ? "Focus" : "Break"}
+          <span className="hl" style={{ "--hl": "var(--you)" } as CSSProperties}>
+            {timer.mode === "focus" ? "Focus" : "Break"}
+          </span>
         </button>
-        <p className={cn("display rounded-lg px-1 text-[36px] leading-none tabular", done && "timer-done text-brand")} style={{ fontStretch: "75%" }}>
-          {mmss(secs)}
-        </p>
+        <div className="relative h-[44px] w-[132px]">
+          <div aria-hidden className={cn("ink-fill absolute inset-y-0 left-0 transition-[width] duration-300 ease-linear", done && "timer-done")} style={{ width: `${fill}%`, background: band }} />
+          <p className="title relative px-1.5 pt-1.5 text-[36px] leading-none tabular">{mmss(secs)}</p>
+          <p
+            aria-hidden
+            className="title absolute inset-0 px-1.5 pt-1.5 text-[36px] leading-none text-on-band tabular transition-[clip-path] duration-300 ease-linear"
+            style={{ clipPath: `inset(0 ${100 - fill}% 0 0)` }}
+          >
+            {mmss(secs)}
+          </p>
+        </div>
         <div className="ml-auto flex w-40 gap-1.5">
           {primary}
           <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" aria-label="Reset timer" onClick={() => action({ type: "reset" })}>
@@ -119,39 +132,47 @@ export function RoomTimer({
   }
 
   return (
-    <section aria-label="Shared timer" className={cn("rounded-[22px] border-[1.5px] border-line-strong bg-canvas/60 p-4", done && "timer-done")}>
+    <section aria-label="Shared timer" className="rounded-xl bg-paper-2 p-4">
       <div className="flex items-center justify-between gap-2">
-        <div role="radiogroup" aria-label="Timer mode" className="inline-flex rounded-full bg-surface-2 p-1">
+        <div role="radiogroup" aria-label="Timer mode" className="inline-flex gap-1 rounded-lg border-[1.5px] border-rule-strong p-1">
           {(["focus", "break"] as const).map((mode) => (
             <button
               key={mode}
               role="radio"
               aria-checked={timer.mode === mode}
               onClick={() => timer.mode !== mode && action({ type: "mode", mode })}
-              className={cn("relative h-7 rounded-full px-3 text-[13px] font-semibold", timer.mode === mode ? "text-ink" : "text-ink-2 hover:text-ink")}
+              className={cn("h-7 rounded-md px-2.5 text-[13px] font-semibold", timer.mode === mode ? "text-ink" : "text-ink-3 hover:text-ink")}
             >
-              {timer.mode === mode ? (
-                <m.span layoutId="timer-mode" className="absolute inset-0 rounded-full bg-surface shadow-[0_1px_3px_rgb(0_0_0/0.12)]" transition={{ type: "spring", stiffness: 500, damping: 36 }} />
-              ) : null}
-              <span className="relative">{mode === "focus" ? "Focus 25" : "Break 5"}</span>
+              <span key={String(timer.mode === mode)} className={timer.mode === mode ? "hl swipe" : undefined} style={{ "--hl": "var(--you)" } as CSSProperties}>
+                {mode === "focus" ? "Focus 25" : "Break 5"}
+              </span>
             </button>
           ))}
         </div>
-        <span className="text-[12px] text-ink-2">Everyone sees this</span>
+        <span className="text-[12px] text-ink-3">Everyone sees this</span>
       </div>
 
-      <p
-        className={cn("display mt-3 text-[64px] leading-none tabular", done && "text-brand")}
-        style={{ fontStretch: "75%" }}
-        aria-live="off"
-      >
-        {mmss(secs)}
-      </p>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full border-[1.5px] border-ink bg-surface" aria-hidden>
+      {/*
+        The round fills with ink behind the numbers as it runs. The digits are
+        drawn twice: toner on the paper, and a copy clipped to the ink so they
+        stay black wherever the band has reached (that matters in dark mode).
+      */}
+      <div className="relative mt-3 h-[78px]">
         <div
-          className={cn("h-full transition-[width] duration-300 ease-linear", timer.mode === "focus" ? "bg-course-fill" : "bg-green")}
-          style={{ width: `${Math.min(100, progress * 100)}%` }}
+          aria-hidden
+          className={cn("ink-fill absolute inset-y-0 left-0 transition-[width] duration-300 ease-linear", done && "timer-done")}
+          style={{ width: `${fill}%`, background: band }}
         />
+        <p className="title relative px-2.5 pt-2.5 text-[64px] leading-none tabular" aria-live="off">
+          {mmss(secs)}
+        </p>
+        <p
+          aria-hidden
+          className="title absolute inset-0 px-2.5 pt-2.5 text-[64px] leading-none text-on-band tabular transition-[clip-path] duration-300 ease-linear"
+          style={{ clipPath: `inset(0 ${100 - fill}% 0 0)` }}
+        >
+          {mmss(secs)}
+        </p>
       </div>
       <p className="mt-2 min-h-5 text-[13px] text-ink-2" role="status">
         {done

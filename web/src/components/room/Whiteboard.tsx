@@ -179,14 +179,14 @@ export function Whiteboard({ roomId, initialStrokes, emit, userId }: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-line px-2 py-1.5" role="toolbar" aria-label="Whiteboard tools">
+      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-rule bg-paper px-2 py-1.5" role="toolbar" aria-label="Whiteboard tools">
         <ToolButton active={tool === "pen"} onClick={() => setTool("pen")} label="Pen">
           <Pen className="size-4" />
         </ToolButton>
         <ToolButton active={tool === "eraser"} onClick={() => setTool("eraser")} label="Eraser">
           <Eraser className="size-4" />
         </ToolButton>
-        <span className="mx-1 h-5 w-px shrink-0 bg-line" />
+        <span className="mx-1 h-5 w-px shrink-0 bg-rule" />
         {COLORS.map((c) => (
           <button
             key={c}
@@ -196,12 +196,12 @@ export function Whiteboard({ roomId, initialStrokes, emit, userId }: Props) {
             }}
             aria-label={`Colour ${c}`}
             aria-pressed={color === c && tool === "pen"}
-            className={cn("grid size-7 shrink-0 place-items-center rounded-full", color === c && tool === "pen" && "ring-2 ring-ink ring-offset-2 ring-offset-surface")}
+            className={cn("grid size-7 shrink-0 place-items-center rounded-full", color === c && tool === "pen" && "ring-2 ring-ink ring-offset-2 ring-offset-paper")}
           >
             <span className="size-4.5 rounded-full dark:ring-1 dark:ring-white/30" style={{ background: c }} />
           </button>
         ))}
-        <span className="mx-1 h-5 w-px shrink-0 bg-line" />
+        <span className="mx-1 h-5 w-px shrink-0 bg-rule" />
         {SIZES.map((s) => (
           <ToolButton key={s} active={size === s} onClick={() => setSize(s)} label={`Size ${s}`}>
             <span className="rounded-full bg-current" style={{ width: s + 3, height: s + 3 }} />
@@ -237,8 +237,7 @@ export function Whiteboard({ roomId, initialStrokes, emit, userId }: Props) {
             onPointerUp={onUp}
             onPointerCancel={onUp}
             className={cn(
-              "absolute inset-0 size-full touch-none rounded-2xl border-[1.5px] border-line-strong bg-white",
-              "bg-[radial-gradient(circle,#d6dbe4_1px,transparent_1px)] bg-[size:22px_22px]",
+              "graph-paper absolute inset-0 size-full touch-none rounded-[10px] border border-rule-strong shadow-[0_1px_2px_rgb(17_18_20/0.06)]",
               tool === "eraser" ? "cursor-cell" : "cursor-crosshair",
             )}
             aria-label="Shared whiteboard"
@@ -262,7 +261,7 @@ function ToolButton({ active, onClick, label, children }: { active: boolean; onC
       aria-label={label}
       aria-pressed={active}
       title={label}
-      className={cn("grid size-8 shrink-0 place-items-center rounded-full text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink", active && "bg-ink text-canvas hover:text-canvas")}
+      className={cn("grid size-8 shrink-0 place-items-center rounded-md text-ink-2 transition-colors hover:bg-paper-2 hover:text-ink", active && "bg-ink text-paper hover:bg-ink hover:text-paper")}
     >
       {children}
     </button>

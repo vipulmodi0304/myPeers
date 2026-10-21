@@ -16,7 +16,7 @@ export default function MessagesPage() {
   return (
     <div className="h-full">
       <div className="grid h-full grid-cols-[minmax(0,1fr)] overflow-hidden md:grid-cols-[300px_minmax(0,1fr)]">
-        <div className={cn("min-h-0 border-line md:border-r", userId ? "hidden md:block" : "block")}>
+        <div className={cn("min-h-0 border-rule md:border-r", userId ? "hidden md:block" : "block")}>
           <ConversationList activeId={userId} />
         </div>
         <div className={cn("min-h-0", userId ? "flex" : "hidden md:flex")}>
@@ -26,7 +26,7 @@ export default function MessagesPage() {
             <div className="m-auto">
               <Empty icon={<MessageCircle className="size-8" />} title="Pick a conversation">
                 Or find someone studying your course on the{" "}
-                <Link to="/app" className="font-semibold text-ink underline underline-offset-2">
+                <Link to="/app" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
                   Study now
                 </Link>{" "}
                 page and say hi.
@@ -49,7 +49,7 @@ function ConversationList({ activeId }: { activeId?: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <h1 className="display px-5 pt-7 pb-4 text-[32px] leading-none">Messages</h1>
+      <h1 className="title mx-5 mt-7 mb-3 border-b-2 border-ink pb-3 text-[34px]">Messages</h1>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="grid h-32 place-items-center text-ink-2">
@@ -66,13 +66,13 @@ function ConversationList({ activeId }: { activeId?: string }) {
                 <Link
                   to={`/app/messages/${c.user.id}`}
                   aria-current={activeId === c.user.id ? "page" : undefined}
-                  className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-surface-2", activeId === c.user.id && "bg-surface-2")}
+                  className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-paper-2", activeId === c.user.id && "bg-paper-2")}
                 >
                   <Avatar name={c.user.name} size={36} live={c.user.live} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className={cn("truncate text-[14.5px]", c.unread ? "font-semibold" : "font-medium")}>{c.user.name}</span>
-                      <span className="shrink-0 text-[12px] text-ink-3">{shortTime(c.lastMessage.createdAt)}</span>
+                      <span className={cn("truncate text-[14.5px]", c.unread ? "font-bold" : "font-medium")}>{c.user.name}</span>
+                      <span className="code shrink-0 text-[11.5px] text-ink-3">{shortTime(c.lastMessage.createdAt)}</span>
                     </span>
                     <span className="flex items-center justify-between gap-2">
                       <span className={cn("truncate text-[13px]", c.unread ? "text-ink" : "text-ink-2")}>
@@ -80,7 +80,7 @@ function ConversationList({ activeId }: { activeId?: string }) {
                         {c.lastMessage.preview}
                       </span>
                       {c.unread ? (
-                        <span className="min-w-5 shrink-0 rounded-full bg-brand px-1.5 text-center text-[11px] leading-5 font-bold text-white tabular">{c.unread}</span>
+                        <span className="min-w-5 shrink-0 rounded-full bg-red px-1.5 text-center text-[11px] leading-5 font-bold text-white tabular">{c.unread}</span>
                       ) : null}
                     </span>
                   </span>
@@ -184,7 +184,7 @@ function ThreadView({ otherId }: { otherId: string }) {
 
   return (
     <div className="flex min-h-0 w-full flex-col">
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-3 md:px-6">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-rule px-3 md:px-6">
         <Button variant="ghost" size="icon" className="md:hidden" aria-label="Back to messages" onClick={() => navigate("/app/messages")}>
           <ArrowLeft className="size-5" />
         </Button>
@@ -261,13 +261,13 @@ function ThreadView({ otherId }: { otherId: string }) {
                     className={cn("flex flex-col", mine ? "items-end" : "items-start", !grouped && "pt-2")}
                   >
                     {newDay ? (
-                      <p className="w-full py-3 text-center text-[12px] font-semibold text-ink-3">
+                      <p className="code w-full py-3 text-center text-[11.5px] text-ink-3">
                         {new Date(msg.createdAt).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
                       </p>
                     ) : null}
                     <Bubble message={msg} mine={mine} />
                     {!grouped || msg.id === lastMineId ? (
-                      <span className="mt-0.5 px-1.5 text-[11px] text-ink-3">
+                      <span className="code mt-0.5 px-1 text-[10.5px] text-ink-3">
                         {clock(msg.createdAt)}
                         {msg.id === lastMineId && msg.readAt ? ", seen" : ""}
                       </span>
@@ -280,7 +280,7 @@ function ThreadView({ otherId }: { otherId: string }) {
         )}
         {typing && other ? (
           <p className="mt-3 flex items-center gap-2 text-[13px] text-ink-2">
-            <span className="inline-flex gap-[3px] rounded-full border-[1.5px] border-line-strong bg-surface px-2.5 py-2">
+            <span className="inline-flex gap-[3px] rounded-xl border border-rule-strong bg-paper px-2.5 py-2">
               {[0, 0.15, 0.3].map((d) => (
                 <span key={d} className="typing-dot size-1.5 rounded-full bg-ink-2" style={{ animationDelay: `${d}s` }} />
               ))}
@@ -308,15 +308,15 @@ function Bubble({ message: m, mine }: { message: Message; mine: boolean }) {
   return (
     <div
       className={cn(
-        "max-w-[78%] rounded-[20px] text-[15px] leading-snug break-words whitespace-pre-wrap",
-        mine ? "rounded-br-[6px] bg-ink text-canvas" : "rounded-bl-[6px] border-[1.5px] border-line-strong bg-surface",
+        "max-w-[78%] rounded-[14px] text-[15px] leading-snug break-words whitespace-pre-wrap",
+        mine ? "rounded-br-[4px] bg-ink text-paper" : "rounded-bl-[4px] border border-rule-strong bg-paper-2",
         a && isImage ? "overflow-hidden p-1" : "px-3.5 py-2",
       )}
     >
       {a ? (
         isImage ? (
           <a href={a.url} target="_blank" rel="noreferrer" className="block">
-            <img src={a.url} alt={a.fileName} className="max-h-72 rounded-xl object-cover" loading="lazy" />
+            <img src={a.url} alt={a.fileName} className="max-h-72 rounded-[10px] object-cover" loading="lazy" />
           </a>
         ) : (
           <a href={a.url} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 py-0.5">
@@ -373,14 +373,14 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
 
   return (
     <form
-      className="border-t border-line p-3 md:px-5"
+      className="border-t border-rule p-3 md:px-5"
       onSubmit={(e) => {
         e.preventDefault();
         if (canSend) send.mutate();
       }}
     >
       {file ? (
-        <div className="mb-2 inline-flex max-w-full items-center gap-2 rounded-full border-[1.5px] border-line-strong bg-surface-2 py-1 pr-1 pl-3.5 text-sm">
+        <div className="mb-2 inline-flex max-w-full items-center gap-2 rounded-lg border border-rule-strong bg-paper-2 py-1 pr-1 pl-3 text-sm">
           <Paperclip className="size-3.5 shrink-0 text-ink-2" />
           <span className="truncate">{file.name}</span>
           <span className="shrink-0 text-ink-2">{fileSize(file.size)}</span>
@@ -434,9 +434,9 @@ function Composer({ otherId, canAttach, onSent }: { otherId: string; canAttach: 
               if (canSend) send.mutate();
             }
           }}
-          className="min-h-11 flex-1 resize-none rounded-[22px] border-[1.5px] border-line-strong bg-surface px-4 py-2.5 text-[15px] placeholder:text-ink-3 focus:border-ink focus:ring-4 focus:ring-focus/15 focus:outline-none"
+          className="min-h-11 flex-1 resize-none rounded-lg border-[1.5px] border-rule-strong bg-paper px-3.5 py-2.5 text-[15px] placeholder:text-ink-3 hover:border-ink-3 focus:border-ink focus:ring-[3px] focus:ring-pen/20 focus:outline-none"
         />
-        <Button type="submit" size="icon" className="size-11 shrink-0" disabled={!canSend} loading={send.isPending} aria-label="Send">
+        <Button type="submit" size="icon" className="h-11 w-12 shrink-0" disabled={!canSend} loading={send.isPending} aria-label="Send">
           {send.isPending ? null : <SendHorizontal className="size-4.5" />}
         </Button>
       </div>

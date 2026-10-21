@@ -6,6 +6,9 @@ import { RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ApiError } from "./lib/api";
 import { router } from "./router";
+import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource-variable/archivo/wdth-italic.css";
+import "@fontsource/fragment-mono/400.css";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -31,8 +34,9 @@ createRoot(document.getElementById("root")!).render(
       </MotionConfig>
       <Toaster
         position="bottom-right"
+        mobileOffset={{ bottom: "calc(76px + env(safe-area-inset-bottom))" }}
         toastOptions={{
-          className: "!bg-surface !text-ink !border-2 !border-ink !font-sans !rounded-2xl !shadow-[3px_3px_0_var(--hard)]",
+          className: "!bg-paper !text-ink !border !border-rule-strong !font-sans !rounded-[10px] !shadow-sheet",
         }}
       />
     </QueryClientProvider>

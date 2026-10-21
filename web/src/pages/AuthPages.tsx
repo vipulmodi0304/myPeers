@@ -11,17 +11,17 @@ type AuthResponse = { user: Me; needsVerification?: boolean };
 
 function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: ReactNode; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
-      <header className="px-4 py-4 sm:px-8 sm:py-5">
+    <div className="flex min-h-dvh flex-col bg-paper">
+      <header className="mx-auto flex w-full max-w-[1180px] items-center px-4 py-5 sm:px-8">
         <Link to="/" aria-label="myPeers home">
           <Logo />
         </Link>
       </header>
-      <main className="flex flex-1 items-start justify-center px-4 pt-4 pb-16 sm:pt-12">
-        <div className="w-full max-w-[420px]">
-          <h1 className="display text-[38px] leading-[0.95] text-balance sm:text-[44px]">{title}</h1>
-          {subtitle ? <p className="mt-3 text-[15.5px] text-ink-2">{subtitle}</p> : null}
-          <div className="sticker mt-7 rounded-[24px] bg-surface p-5 sm:p-7">{children}</div>
+      <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-16 sm:pt-14">
+        <div className="w-full max-w-[440px]">
+          <h1 className="title text-[40px] text-balance sm:text-[48px]">{title}</h1>
+          {subtitle ? <p className="mt-4 text-[15.5px] text-ink-2">{subtitle}</p> : null}
+          <div className="mt-7 border-t-2 border-ink pt-6">{children}</div>
           {footer ? <div className="mt-8 text-sm text-ink-2">{footer}</div> : null}
         </div>
       </main>
@@ -32,7 +32,7 @@ function AuthLayout({ title, subtitle, children, footer }: { title: string; subt
 function FormError({ error }: { error: unknown }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand">
+    <p role="alert" className="rounded-lg bg-red-soft px-3.5 py-2.5 text-sm font-medium text-red">
       {errorMessage(error)}
     </p>
   );
@@ -77,7 +77,7 @@ export function LoginPage() {
       footer={
         <>
           New to myPeers?{" "}
-          <Link to="/signup" className="font-semibold text-ink underline underline-offset-2">
+          <Link to="/signup" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
             Create an account
           </Link>
         </>
@@ -97,7 +97,7 @@ export function LoginPage() {
           label="Password"
           htmlFor="password"
           hint={
-            <Link to="/forgot-password" className="font-semibold text-ink underline-offset-2 hover:underline">
+            <Link to="/forgot-password" className="font-semibold text-pen hover:underline">
               Forgot your password?
             </Link>
           }
@@ -116,9 +116,9 @@ export function LoginPage() {
 
 function DemoDivider({ onClick, loading }: { onClick: () => void; loading: boolean }) {
   return (
-    <div className="mt-7 border-t-[1.5px] border-dashed border-line-strong pt-6">
+    <div className="mt-8 border-t border-dashed border-rule-strong pt-6">
       <p className="text-sm text-ink-2">Not at McGill, or just looking around?</p>
-      <Button variant="sticker" size="lg" className="mt-3 w-full" onClick={onClick} loading={loading}>
+      <Button variant="secondary" size="lg" className="mt-3 w-full" onClick={onClick} loading={loading}>
         Try the demo
       </Button>
     </div>
@@ -150,7 +150,7 @@ export function SignupPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-ink underline underline-offset-2">
+          <Link to="/login" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
             Sign in
           </Link>
         </>
@@ -173,7 +173,7 @@ export function SignupPage() {
           <Input id="password" type="password" autoComplete="new-password" required minLength={8} value={form.password} onChange={set("password")} />
         </Field>
         {takenEmail ? (
-          <p role="alert" className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand">
+          <p role="alert" className="rounded-lg bg-red-soft px-3.5 py-2.5 text-sm font-medium text-red">
             You already have an account.{" "}
             <Link to="/login" className="font-semibold underline">
               Sign in instead
@@ -203,7 +203,7 @@ function CodeInput({ value, onChange, id }: { value: string; onChange: (v: strin
       maxLength={6}
       value={value}
       onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
-      className="course-code h-16 text-center text-[34px] tracking-[0.45em]"
+      className="code h-16 text-center text-[32px] tracking-[0.45em]"
       placeholder="······"
     />
   );
@@ -243,7 +243,7 @@ export function VerifyPage() {
       }
       footer={
         <button
-          className="font-semibold text-ink underline underline-offset-2"
+          className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen"
           onClick={async () => {
             await api.post("/api/auth/logout");
             setMe(null);
@@ -305,7 +305,7 @@ export function ForgotPasswordPage() {
         title="Reset your password"
         subtitle="Enter your McGill email and we'll send you a code."
         footer={
-          <Link to="/login" className="font-semibold text-ink underline underline-offset-2">
+          <Link to="/login" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
             Back to sign in
           </Link>
         }
@@ -338,7 +338,7 @@ export function ForgotPasswordPage() {
         </>
       }
       footer={
-        <button className="font-semibold text-ink underline underline-offset-2" onClick={() => setStep("email")}>
+        <button className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen" onClick={() => setStep("email")}>
           Use a different email
         </button>
       }

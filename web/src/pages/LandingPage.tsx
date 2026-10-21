@@ -6,27 +6,29 @@ import { Avatar, Button, CourseTag, Logo } from "@/components/ui";
 import { api } from "@/lib/api";
 import { canUseApp, useMe } from "@/lib/auth";
 import { courseVars } from "@/lib/courseColor";
-import { cn, initials } from "@/lib/format";
+import { cn } from "@/lib/format";
 import { useStartDemo } from "./AuthPages";
 
 /*
- * Landing page, "Library floor" direction (docs/DESIGN.md).
- * One loud moment (the poster headline and the cluster of classmates around
- * it), then calmer sections whose illustrations play only while on screen.
+ * Landing page, "Highlighter" direction (docs/DESIGN.md).
+ * The page is a student's own study sheet. The headline's course code is
+ * highlighted and keeps changing, the sample board below it highlights each
+ * classmate in as they "check in", and the sections further down are working
+ * pieces of the app rather than pictures of it.
  */
 
-// The demo's sample classmates (server/src/services/demo.ts), so the ticker shows what the demo really has.
+// The demo's sample classmates (server/src/services/demo.ts), so the board shows what the demo really has.
 const DEMO_PEOPLE = [
-  { name: "Maya Chen", course: "COMP 251", where: "Trottier" },
-  { name: "Sofia Rossi", course: "MATH 240", where: "Redpath" },
-  { name: "Noah Kim", course: "COMP 302", where: "Schulich" },
-  { name: "Daniel Okafor", course: "COMP 251", where: "McLennan" },
-  { name: "Léa Tremblay", course: "ECON 208", where: "Bronfman" },
-  { name: "Arjun Patel", course: "COMP 206", where: "home" },
+  { name: "Noah Kim", course: "COMP 302", topic: "OCaml recursion", where: "Schulich Library", mins: 6 },
+  { name: "Sofia Rossi", course: "MATH 240", topic: "Induction proofs", where: "Redpath basement", mins: 14 },
+  { name: "Daniel Okafor", course: "COMP 251", topic: "Midterm review", where: "McLennan, 4th floor", mins: 18 },
+  { name: "Maya Chen", course: "COMP 251", topic: "A3: dynamic programming", where: "Trottier, 3rd floor", mins: 42 },
+  { name: "Léa Tremblay", course: "ECON 208", topic: "Problem set 4", where: "Bronfman Building", mins: 51 },
+  { name: "Arjun Patel", course: "COMP 206", topic: "Bash scripting lab", where: "Online", mins: 63 },
+  { name: "Emma Wilson", course: "COMP 251", topic: "Graph algorithms", where: "Online", mins: 77 },
 ];
 const CYCLE = ["COMP 251", "MATH 240", "ECON 208", "COMP 302", "COMP 206"];
-
-const spring = { type: "spring", stiffness: 380, damping: 26 } as const;
+const YOU = { "--hl": "var(--you)" } as CSSProperties;
 
 /** Runs `tick` every `ms` while `active`, unless the visitor prefers reduced motion. */
 function useLoop(tick: () => void, ms: number, active = true) {
@@ -53,82 +55,93 @@ export function LandingPage() {
   const signedIn = canUseApp(me);
   const demoOn = stats?.demoEnabled !== false;
 
-  const ctas = (inverse = false) =>
+  /** The page's two actions. Signed-in visitors just get a way back into the app. */
+  const actions = (size: "md" | "lg" = "lg") =>
     signedIn ? (
       <Link to="/app">
-        <Button size="lg" variant={inverse ? "sticker" : "primary"}>
-          Open myPeers
-        </Button>
+        <Button size={size}>Open myPeers</Button>
       </Link>
     ) : (
       <>
-        <Link to="/signup">
-          <Button size="lg" variant={inverse ? "sticker" : "primary"}>
-            Sign up with McGill email
-          </Button>
-        </Link>
         {demoOn ? (
-          <Button
-            size="lg"
-            variant={inverse ? "ghost" : "sticker"}
-            className={inverse ? "border-2 border-white/70 text-white hover:bg-white/10 hover:text-white" : undefined}
-            onClick={() => demo.mutate()}
-            loading={demo.isPending}
-          >
+          <Button size={size} onClick={() => demo.mutate()} loading={demo.isPending}>
             Try the demo
           </Button>
         ) : null}
+        <Link to="/signup">
+          <Button size={size} variant={demoOn ? "secondary" : "primary"}>
+            Sign up with your McGill email
+          </Button>
+        </Link>
       </>
     );
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-canvas">
-      <header className="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
-        <Logo />
-        <nav className="flex items-center gap-1.5">
+    <div className="min-h-dvh overflow-x-clip bg-paper">
+      {/* Running head, like the top of a printed handout. */}
+      <div className="border-b border-rule">
+        <div className="code mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-2.5 text-[12px] text-ink-3 sm:px-8">
+          <span>myPeers · live study board</span>
+          <span className="hidden md:inline">Classmates on this page are the demo's samples</span>
+          <span>p. 1</span>
+        </div>
+      </div>
+
+      <header className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-4 sm:px-8 sm:py-5">
+        <Link to="/" aria-label="myPeers home">
+          <Logo size={24} />
+        </Link>
+        <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
+          <a href="#how" className="hidden rounded-lg px-3 py-2 text-[14.5px] font-semibold text-ink-2 hover:text-ink md:block">
+            How it works
+          </a>
+          <a href="#rooms" className="hidden rounded-lg px-3 py-2 text-[14.5px] font-semibold text-ink-2 hover:text-ink md:block">
+            Rooms
+          </a>
           {signedIn ? (
             <Link to="/app">
               <Button size="sm">Open myPeers</Button>
             </Link>
           ) : (
             <>
-              <Link to="/login">
-                <Button variant="ghost" size="sm">
-                  Sign in
-                </Button>
+              <Link to="/login" className="rounded-lg px-3 py-2 text-[14.5px] font-semibold text-ink-2 hover:text-ink">
+                Sign in
               </Link>
-              <Link to="/signup" className="hidden sm:block">
-                <Button variant="sticker" size="sm">
-                  Create account
+              {demoOn ? (
+                <Button size="sm" className="hidden sm:inline-flex" onClick={() => demo.mutate()} loading={demo.isPending}>
+                  Try the demo
                 </Button>
-              </Link>
+              ) : null}
             </>
           )}
         </nav>
       </header>
 
       <main>
-        {/* ---------- Hero ---------- */}
-        <section className="mx-auto grid max-w-[1180px] gap-8 px-4 pt-6 sm:px-8 sm:pt-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-6 lg:pt-12">
-          <div className="min-w-0">
-            <h1 className="poster text-[clamp(54px,13.5vw,92px)] lg:text-[clamp(84px,7.8vw,112px)]">
-              <span className="sr-only">See who's studying your course at McGill right now.</span>
-              <span aria-hidden>
-                Who's in McLennan doing{" "}
-                <span className="whitespace-nowrap">
-                  <CyclingChip />?
-                </span>
-              </span>
-            </h1>
-            <p className="mt-6 max-w-[34rem] text-[17px] leading-relaxed text-ink-2 sm:text-[18px]">
-              Check in with the course you're on and see every McGill classmate working on it right now, in the library or online. Message them,
-              or open a room with one whiteboard and one timer for the whole group.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">{ctas()}</div>
-            <p className="mt-4 text-[13.5px] text-ink-3">
+        {/* ---------- Hero: the headline, then the board itself ---------- */}
+        <section className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-8 sm:pt-10">
+          <h1 className="title text-[clamp(50px,10.5vw,96px)]">
+            <span className="sr-only">See which McGill classmates are studying your course right now.</span>
+            <span aria-hidden className="block">
+              Who's studying
+              <br />
+              <CyclingCode />
+              <br />
+              right now?
+            </span>
+          </h1>
+          <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,34rem)_1fr] lg:items-end">
+            <div>
+              <p className="max-w-[34rem] text-[17px] leading-relaxed text-ink-2 sm:text-[18px]">
+                Check in with the course you're on and where you are. Everyone else on it shows up instantly. Message them, or open a room with one
+                whiteboard and one timer for the whole group.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">{actions()}</div>
+            </div>
+            <p className="text-[13.5px] text-ink-3 lg:justify-self-end lg:pb-3">
               {stats && stats.studyingNow > 0 ? (
                 <span className="inline-flex items-center gap-1.5 font-medium text-ink-2">
-                  <span className="live-dot size-2 rounded-full bg-green" />
+                  <span className="live-dot size-2 rounded-full bg-live" />
                   {stats.studyingNow} {stats.studyingNow === 1 ? "student" : "students"} checked in right now
                 </span>
               ) : (
@@ -136,65 +149,37 @@ export function LandingPage() {
               )}
             </p>
           </div>
-          <HeroCluster />
+          <LiveBoard />
         </section>
 
-        <Ticker />
+        <HowItWorks />
+        <Rooms />
 
-        {/* ---------- How it works ---------- */}
-        <section aria-labelledby="how" className="mx-auto max-w-[1180px] px-4 py-20 sm:px-8 sm:py-28">
-          <h2 id="how" className="display max-w-[18ch] text-[38px] leading-[0.98] text-balance sm:text-[56px]">
-            Check in. See who's here. Study together.
-          </h2>
-          <ol className="mt-10 grid gap-4 md:grid-cols-3 md:gap-5">
-            <Step n={1} title="Check in" body="Pick your course and say what you're on and where. It takes five seconds.">
-              <CheckInDemo />
-            </Step>
-            <Step n={2} title="See who's here" body="Everyone on your course shows up at the top, live. No refreshing.">
-              <BoardDemo />
-            </Step>
-            <Step n={3} title="Study together" body="Message someone, or open a room for the group with a six-letter code.">
-              <ChatDemo />
-            </Step>
-          </ol>
-        </section>
-
-        {/* ---------- Rooms ---------- */}
-        <section
-          aria-labelledby="rooms"
-          className="mx-auto grid max-w-[1180px] items-center gap-10 px-4 pb-20 sm:px-8 sm:pb-28 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16"
-        >
-          <div className="min-w-0">
-            <h2 id="rooms" className="display text-[38px] leading-[0.98] text-balance sm:text-[56px]">
-              One timer for the whole group.
-            </h2>
-            <p className="mt-5 max-w-[32rem] text-[17px] leading-relaxed text-ink-2">
-              Start a focus round and everyone's countdown ends at the same second, on every laptop and phone. Work a problem out on a shared
-              whiteboard, send a reaction when someone gets it, and keep the group chat with the room.
+        {/* ---------- Close ---------- */}
+        <section className="mx-auto max-w-[1180px] px-4 pt-6 pb-20 sm:px-8 sm:pb-28">
+          <div className="border-t-2 border-ink pt-12 sm:pt-16">
+            <p className="title max-w-[16ch] text-[clamp(42px,8vw,88px)]">
+              Find out who's studying{" "}
+              <span className="hl" style={YOU}>
+                your course
+              </span>
+              .
             </p>
-          </div>
-          <RoomDemo />
-        </section>
-
-        {/* ---------- Closing ---------- */}
-        <section className="mx-auto max-w-[1180px] px-4 pb-16 sm:px-8 sm:pb-24">
-          <div style={courseVars("COMP 302")} className="relative overflow-hidden rounded-[28px] border-2 border-ink bg-course-fill px-6 py-12 text-white shadow-hard-lg sm:px-12 sm:py-16">
-            <p className="poster max-w-[14ch] text-[clamp(44px,9vw,92px)]">Someone in your class is studying right now.</p>
-            <div className="mt-8 flex flex-wrap gap-3">{ctas(true)}</div>
+            <div className="mt-9 flex flex-wrap items-center gap-3">{actions()}</div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-line">
+      <footer className="border-t border-rule">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-4 py-8 text-[14px] text-ink-2 sm:px-8">
           <p>
             Built by{" "}
-            <a href="https://www.linkedin.com/in/vipul-modi-883003219/" className="font-semibold text-ink underline decoration-line-strong underline-offset-3 hover:decoration-ink">
+            <a href="https://www.linkedin.com/in/vipul-modi-883003219/" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
               Vipul Modi
             </a>
             , a CS student at McGill.
           </p>
-          <a href="https://github.com/vipulmodi0304/mypeers" className="font-semibold text-ink underline decoration-line-strong underline-offset-3 hover:decoration-ink">
+          <a href="https://github.com/vipulmodi0304/mypeers" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
             Source on GitHub
           </a>
         </div>
@@ -205,223 +190,84 @@ export function LandingPage() {
 
 /* ---------- Hero pieces ---------- */
 
-/** The course code in the headline, printed as a sticker that swaps every few seconds. */
-function CyclingChip() {
+/** The course code in the headline: highlighted, and re-highlighted each time it changes. */
+function CyclingCode() {
   const [i, setI] = useState(0);
-  useLoop(() => setI((n) => (n + 1) % CYCLE.length), 2400);
+  useLoop(() => setI((n) => (n + 1) % CYCLE.length), 2600);
   const code = CYCLE[i]!;
   return (
-    <span className="relative inline-block align-baseline">
-      <AnimatePresence mode="popLayout" initial={false}>
-        <m.span
-          key={code}
-          initial={{ y: "70%", opacity: 0, rotate: -9 }}
-          animate={{ y: 0, opacity: 1, rotate: -2 }}
-          exit={{ y: "-35%", opacity: 0, rotate: 5, transition: { duration: 0.14, ease: "easeIn" } }}
-          transition={spring}
-          style={{ ...courseVars(code), boxShadow: "0.05em 0.05em 0 var(--hard)" } as CSSProperties}
-          className="inline-block rounded-[0.12em] border-[0.035em] border-ink bg-course-fill px-[0.12em] whitespace-nowrap text-white"
-        >
-          {code}
-        </m.span>
-      </AnimatePresence>
+    <span key={code} style={courseVars(code)} className="hl swipe inline-block whitespace-nowrap" aria-hidden>
+      {code}
     </span>
   );
 }
 
-/** Placed item in the hero cluster: pops in on load, then drifts. */
-function Float({ at, delay, tilt = 0, className, children }: { at: CSSProperties; delay: number; tilt?: number; className?: string; children: ReactNode }) {
-  return (
-    <m.div
-      className={cn("absolute", className)}
-      style={at}
-      initial={{ opacity: 0, scale: 0.6, y: 24 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ ...spring, delay }}
-    >
-      <div className="bob" style={{ "--tilt": `${tilt}deg`, animationDelay: `${-delay * 3}s` } as CSSProperties}>
-        {children}
-      </div>
-    </m.div>
-  );
-}
-
-function Bubble({ children, from, course, tail = "left" }: { children: ReactNode; from: string; course: string; tail?: "left" | "right" }) {
-  return (
-    <div
-      className={cn(
-        "sticker max-w-[230px] rounded-[18px] bg-surface px-3.5 py-2.5 sm:max-w-[260px]",
-        tail === "left" ? "rounded-bl-[5px]" : "rounded-br-[5px]",
-      )}
-    >
-      <p className="text-[14.5px] leading-snug font-semibold">{children}</p>
-      <p className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-3">
-        {from} <CourseTag code={course} size="sm" />
-      </p>
-    </div>
-  );
-}
-
-function FaceSticker({ name, course, size }: { name: string; course: string; size: number }) {
-  return (
-    <span
-      style={{ ...courseVars(course), width: size, height: size, fontSize: size * 0.34 }}
-      className="sticker grid place-items-center rounded-full bg-course-fill font-bold text-white"
-      title={`${name}, ${course}`}
-    >
-      {initials(name)}
-    </span>
-  );
-}
-
-function TypingDots() {
-  return (
-    <span className="ml-1 inline-flex gap-[3px] align-middle" aria-hidden>
-      {[0, 0.15, 0.3].map((d) => (
-        <i key={d} className="typing-dot size-[5px] rounded-full bg-ink" style={{ animationDelay: `${d}s` }} />
-      ))}
-    </span>
-  );
-}
-
-function HeroCluster() {
-  return (
-    <div className="relative mx-auto h-[330px] w-full max-w-[520px] sm:h-[400px] lg:h-[470px]" aria-hidden>
-      <Float at={{ left: "0%", top: "3%" }} delay={0.35} tilt={-2}>
-        <Bubble from="Maya" course="COMP 251">
-          anyone doing A3 tonight?
-          <TypingDots />
-        </Bubble>
-      </Float>
-      <Float at={{ right: "6%", top: "1%" }} delay={0.5} tilt={6}>
-        <FaceSticker name="Noah Kim" course="COMP 302" size={52} />
-      </Float>
-      <Float at={{ left: "10%", top: "34%" }} delay={0.62} tilt={-1}>
-        <div style={courseVars("COMP 251")} className="sticker w-[250px] rounded-2xl bg-surface p-3.5 sm:w-[280px]">
-          <p className="text-[12px] font-semibold text-ink-3">You're checked in</p>
-          <div className="mt-2 flex items-center gap-2.5">
-            <CourseTag code="COMP 251" size="lg" />
-            <div className="min-w-0">
-              <p className="truncate text-[14px] font-semibold">Q2, the knapsack one</p>
-              <p className="text-[12.5px] text-ink-2">Trottier, for 48m</p>
-            </div>
-          </div>
-        </div>
-      </Float>
-      <Float at={{ right: "0%", top: "30%" }} delay={0.74} tilt={-7}>
-        <FaceSticker name="Daniel Okafor" course="COMP 251" size={64} />
-      </Float>
-      <Float at={{ left: "4%", bottom: "6%" }} delay={0.86} tilt={5} className="hidden sm:block">
-        <FaceSticker name="Sofia Rossi" course="MATH 240" size={48} />
-      </Float>
-      <Float at={{ right: "2%", bottom: "4%" }} delay={0.98} tilt={2}>
-        <Bubble from="Finals grind" course="COMP 251" tail="right">
-          25:00 focus, starting now
-        </Bubble>
-      </Float>
-    </div>
-  );
-}
-
-/** The demo's classmates checking in, scrolling past. Hover to pause. */
-function Ticker() {
-  const items = DEMO_PEOPLE.map((p) => (
-    <span key={p.name} className="inline-flex shrink-0 items-center gap-2 text-[14.5px] font-semibold">
-      {p.name.split(" ")[0]} checked in
-      <CourseTag code={p.course} size="sm" />
-      {p.where === "home" ? "from home" : `at ${p.where}`}
-    </span>
-  ));
-  return (
-    <div className="ticker-wrap relative mt-10 flex h-14 items-center overflow-hidden border-y-2 border-ink bg-ink text-canvas sm:mt-14" aria-hidden>
-      <span className="absolute left-0 z-10 flex h-full items-center gap-2 bg-ink pr-4 pl-4 text-[12.5px] font-semibold text-canvas/70 sm:pl-8">
-        <span className="live-dot size-2 rounded-full bg-green" /> In the demo
-      </span>
-      {/* Two identical halves; sliding by exactly half loops without a seam. */}
-      <div className="pl-36 sm:pl-40">
-        <div className="ticker flex w-max">
-          <div className="flex shrink-0 gap-10 pr-10">{items}</div>
-          <div className="flex shrink-0 gap-10 pr-10">{items}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- How it works ---------- */
-
-function Step({ n, title, body, children }: { n: number; title: string; body: string; children: ReactNode }) {
-  return (
-    <li className="flex min-w-0 flex-col overflow-hidden rounded-[22px] border-[1.5px] border-line-strong bg-surface">
-      <div className="relative h-[220px] border-b-[1.5px] border-line bg-canvas/60">{children}</div>
-      <div className="p-5">
-        <p className="flex items-center gap-2.5">
-          <span className="grid size-7 place-items-center rounded-full bg-ink text-[13px] font-bold text-canvas">{n}</span>
-          <span className="display text-[22px] leading-none">{title}</span>
-        </p>
-        <p className="mt-2.5 text-[15px] text-ink-2">{body}</p>
-      </div>
-    </li>
-  );
-}
-
-/** Types a course code, then turns it into a sticker. Loops while visible. */
-function CheckInDemo() {
+/**
+ * The sample board, printed as a table. Every few seconds the next demo
+ * classmate checks in at the top, highlighted in their course's ink.
+ */
+function LiveBoard() {
   const ref = useRef<HTMLDivElement>(null);
-  const visible = useInView(ref, { margin: "-15% 0px" });
-  const reduced = useReducedMotion();
-  const word = "COMP 251";
-  const [n, setN] = useState(reduced ? word.length + 6 : 0);
-  useLoop(() => setN((x) => (x >= word.length + 10 ? 0 : x + 1)), 170, visible);
-  const typed = word.slice(0, Math.min(n, word.length));
-  const done = n > word.length + 1;
-  return (
-    <div ref={ref} className="flex h-full flex-col justify-center gap-3 px-6">
-      <div className="flex h-11 items-center rounded-xl border-[1.5px] border-ink bg-surface px-3.5">
-        <span className="course-code text-[17px]">{typed}</span>
-        {!done ? <span className="ml-px h-5 w-[2px] animate-pulse bg-ink" /> : null}
-      </div>
-      <div className="flex h-9 items-center gap-2">
-        <AnimatePresence>
-          {done ? (
-            <m.span key="tag" initial={{ scale: 0.4, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: -3, opacity: 1 }} exit={{ opacity: 0 }} transition={spring}>
-              <CourseTag code={word} size="md" />
-            </m.span>
-          ) : null}
-        </AnimatePresence>
-        <span className={cn("text-[13px] font-semibold transition-colors", done ? "text-green" : "text-ink-3")}>{done ? "Checked in at Trottier" : "Trottier, 3rd floor"}</span>
-      </div>
-    </div>
-  );
-}
+  const visible = useInView(ref, { margin: "-10% 0px" });
+  const [head, setHead] = useState(0);
+  useLoop(() => setHead((h) => h + 1), 3200, visible);
+  const rows = [0, 1, 2, 3].map((o) => {
+    const k = head - o + DEMO_PEOPLE.length * 100;
+    return { ...DEMO_PEOPLE[k % DEMO_PEOPLE.length]!, key: k, fresh: o === 0 && head > 0 };
+  });
 
-/** Classmates arriving at the top of the list. */
-function BoardDemo() {
-  const ref = useRef<HTMLDivElement>(null);
-  const visible = useInView(ref, { margin: "-15% 0px" });
-  const [k, setK] = useState(3);
-  useLoop(() => setK((x) => x + 1), 2200, visible);
-  const rows = [0, 1, 2].map((o) => DEMO_PEOPLE[(k - o) % DEMO_PEOPLE.length]!);
   return (
-    <div ref={ref} className="h-full overflow-hidden px-4 pt-4">
-      <ul className="space-y-2">
+    <div ref={ref} className="relative mt-10 sm:mt-12" aria-label="Sample classmates checked in" role="img">
+      {/* Margin note in ballpoint, with an arrow down to the board. */}
+      <div className="pen-note pointer-events-none absolute -top-14 right-0 hidden -rotate-2 items-end gap-2 text-[15px] lg:flex" aria-hidden>
+        <span className="pb-6 text-right leading-snug">
+          sample classmates from the demo,
+          <br />
+          highlighted in as they check in
+        </span>
+        <svg width="46" height="64" viewBox="0 0 46 64" fill="none" className="text-pen">
+          <path className="pen-draw" style={{ "--len": 1, "--draw-delay": "600ms" } as CSSProperties} pathLength={1} d="M8 4c18 6 30 22 26 52" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path className="pen-draw" style={{ "--len": 1, "--draw-delay": "1300ms" } as CSSProperties} pathLength={1} d="M24 47l10 10 7-13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      <div className="code hidden grid-cols-[minmax(0,13rem)_7.5rem_minmax(0,1fr)_minmax(0,14rem)_5rem] gap-5 border-t-2 border-ink py-2.5 text-[11.5px] text-ink-3 md:grid">
+        <span>Name</span>
+        <span>Course</span>
+        <span>Working on</span>
+        <span>Where</span>
+        <span className="text-right">For</span>
+      </div>
+      <ul className="divide-y divide-rule border-y border-rule max-md:border-t-2 max-md:border-t-ink">
         <AnimatePresence initial={false} mode="popLayout">
           {rows.map((p, i) => (
             <m.li
-              key={`${p.name}-${k - i}`}
-              layout
-              initial={{ opacity: 0, y: -18, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12 }}
-              transition={spring}
-              className="flex items-center gap-2.5 rounded-xl border-[1.5px] border-line bg-surface px-3 py-2"
+              key={p.key}
+              layout="position"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+              transition={{ type: "spring", stiffness: 380, damping: 34 }}
+              style={courseVars(p.course)}
+              className={cn(
+                "grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 py-3 md:grid-cols-[minmax(0,13rem)_7.5rem_minmax(0,1fr)_minmax(0,14rem)_5rem] md:items-center md:gap-5 md:py-3.5",
+                p.fresh && "arrive",
+                i === 3 && "max-sm:hidden",
+              )}
             >
-              <Avatar name={p.name} course={p.course} size={30} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] font-semibold">{p.name}</span>
-                <span className="block truncate text-[12px] text-ink-3">{p.where === "home" ? "Online" : p.where}</span>
+              <span className="flex min-w-0 items-center gap-2.5">
+                <Avatar name={p.name} course={p.course} size={28} />
+                <span className="truncate text-[15px] font-semibold">{p.name}</span>
               </span>
-              <CourseTag code={p.course} size="sm" />
+              <span className="text-right md:text-left">
+                <CourseTag code={p.course} size="sm" className={p.fresh || head === 0 ? "swipe" : undefined} />
+              </span>
+              <span className="col-span-2 truncate pl-[38px] text-[14px] text-ink-2 md:col-span-1 md:pl-0 md:text-[15px]">
+                {p.topic}
+                <span className="text-ink-3 md:hidden"> · {p.where}</span>
+              </span>
+              <span className="hidden truncate text-[15px] text-ink-2 md:block">{p.where}</span>
+              <span className="code hidden text-right text-[12.5px] text-ink-3 md:block">{p.fresh ? "just now" : `${p.mins} min`}</span>
             </m.li>
           ))}
         </AnimatePresence>
@@ -430,156 +276,328 @@ function BoardDemo() {
   );
 }
 
-const CHAT = [
-  { mine: false, text: "want to do Q2 together?" },
-  { mine: true, text: "yes, I'm on the 3rd floor" },
-  { mine: false, text: "opening a room, code K7QX2M" },
+/* ---------- How it works: one walkthrough, the steps light up as it plays ---------- */
+
+const STEPS = [
+  { title: "Check in", body: "Pick your course, say what you're on and where. Five seconds." },
+  { title: "See who's here", body: "Everyone on your course shows up at the top, live. No refreshing." },
+  { title: "Study together", body: "Message someone, or open a room for the group with a six-letter code." },
 ];
 
-function ChatDemo() {
+// Frames of the walkthrough (one frame = 110 ms).
+const F = { course: 8, topic: 31, where: 50, press: 54, checked: 58, maya: 64, daniel: 70, msg: 86, reply: 100, end: 128 };
+const TYPED = { course: "COMP 251", topic: "A3: dynamic programming", where: "Trottier, 3rd floor" };
+
+function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
-  const visible = useInView(ref, { margin: "-15% 0px" });
+  const visible = useInView(ref, { margin: "-20% 0px" });
   const reduced = useReducedMotion();
-  const [n, setN] = useState(reduced ? CHAT.length : 1);
-  useLoop(() => setN((x) => (x >= CHAT.length + 1 ? 1 : x + 1)), 1500, visible);
+  const [f, setF] = useState(reduced ? F.end - 10 : 0);
+  useLoop(() => setF((x) => (x >= F.end ? 0 : x + 1)), 110, visible);
+  const step = reduced ? -1 : f < F.checked ? 0 : f < F.msg ? 1 : 2;
+
   return (
-    <div ref={ref} className="flex h-full flex-col justify-end gap-2 px-5 pb-5">
-      <AnimatePresence initial={false}>
-        {CHAT.slice(0, Math.min(n, CHAT.length)).map((msg) => (
-          <m.p
-            key={msg.text}
-            layout
-            initial={{ opacity: 0, scale: 0.7, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={spring}
-            style={{ transformOrigin: msg.mine ? "bottom right" : "bottom left" }}
-            className={cn(
-              "max-w-[85%] rounded-[16px] px-3 py-1.5 text-[13.5px] font-medium",
-              msg.mine ? "self-end rounded-br-[4px] bg-ink text-canvas" : "self-start rounded-bl-[4px] border-[1.5px] border-line-strong bg-surface",
-            )}
-          >
-            {msg.text}
-          </m.p>
-        ))}
-      </AnimatePresence>
+    <section id="how" aria-labelledby="how-title" className="mx-auto max-w-[1180px] scroll-mt-6 px-4 pt-24 pb-20 sm:px-8 sm:pt-32 sm:pb-28">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
+        <div>
+          <h2 id="how-title" className="title max-w-[12ch] text-[clamp(38px,5.4vw,60px)]">
+            Check in. See who's here. Study together.
+          </h2>
+          <ol className="mt-10 space-y-7">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="grid grid-cols-[2rem_1fr] gap-x-3">
+                <span className="code pt-1 text-[13px] text-ink-3">{i + 1}.</span>
+                <div>
+                  <p className="heading text-[22px]">
+                    <span key={String(step === i)} className={step === i ? "hl swipe" : undefined} style={YOU}>
+                      {s.title}
+                    </span>
+                  </p>
+                  <p className="mt-1.5 max-w-[30rem] text-[16px] text-ink-2">{s.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div ref={ref} aria-hidden>
+          <Walkthrough f={f} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function typed(text: string, from: number, f: number) {
+  return text.slice(0, Math.max(0, Math.min(text.length, f - from)));
+}
+
+/** A small, working-looking copy of the Study now screen that plays the three steps. */
+function Walkthrough({ f }: { f: number }) {
+  const course = typed(TYPED.course, 0, f);
+  const topic = typed(TYPED.topic, F.course, f);
+  const where = typed(TYPED.where, F.topic, f);
+  const field = f < F.course ? 0 : f < F.topic ? 1 : f < F.where ? 2 : -1;
+  const checked = f >= F.checked;
+
+  return (
+    <div className="overflow-hidden rounded-[14px] border border-rule-strong bg-paper">
+      <div className="flex items-center justify-between border-b border-rule px-4 py-2.5">
+        <span className="heading text-[15px]">Study now</span>
+        <span className="code text-[11.5px] text-ink-3">3 classmates online</span>
+      </div>
+      <div className="h-[400px] p-4 sm:p-5">
+        <AnimatePresence mode="wait" initial={false}>
+          {!checked ? (
+            <m.div key="form" exit={{ opacity: 0, y: -6, transition: { duration: 0.18 } }}>
+              <p className="heading border-b border-rule pb-3 text-[19px]">What are you studying?</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-[8.5rem_1fr]">
+                <FakeField label="Course" active={field === 0} mono>
+                  {course}
+                </FakeField>
+                <FakeField label="Working on" active={field === 1}>
+                  {topic}
+                </FakeField>
+                <FakeField label="Where" active={field === 2} className="sm:col-span-2">
+                  {where}
+                </FakeField>
+              </div>
+              <p className="mt-3 flex flex-wrap items-center text-[12.5px] text-ink-2">
+                <span className="mr-2 text-ink-3">Quick pick</span>
+                {["McLennan", "Redpath", "Trottier", "Schulich", "Online"].map((p, i) => (
+                  <span key={p} className={cn("px-2", i > 0 && "border-l border-rule")}>
+                    <span className={cn(f >= F.topic + 3 && p === "Trottier" && "hl swipe font-semibold")} style={YOU}>
+                      {p}
+                    </span>
+                  </span>
+                ))}
+              </p>
+              <span
+                className={cn(
+                  "btn-ink mt-5 inline-flex h-11 items-center px-6 text-[14.5px] font-bold transition-transform",
+                  f >= F.press && f < F.checked && "scale-95",
+                )}
+              >
+                Check in
+              </span>
+            </m.div>
+          ) : (
+            <m.div key="board" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+              <div style={courseVars("COMP 251")} className="flex items-center gap-3 rounded-xl border-2 border-ink p-3">
+                <CourseTag code="COMP 251" size="md" swipe />
+                <div className="min-w-0">
+                  <p className="text-[11.5px] font-semibold text-ink-3">You're checked in</p>
+                  <p className="truncate text-[14px] font-semibold">A3: dynamic programming</p>
+                </div>
+                <span className="code ml-auto text-[11.5px] text-ink-3">just now</span>
+              </div>
+              <p className="mt-4 flex items-baseline gap-2.5 pb-1.5">
+                <CourseTag code="COMP 251" size="sm" />
+                <span className="text-[12px] font-medium text-ink-3">Your course</span>
+              </p>
+              <ul className="divide-y divide-rule border-y border-rule">
+                {[
+                  { name: "Maya Chen", topic: "A3: dynamic programming", where: "Trottier, 3rd floor", at: F.maya },
+                  { name: "Daniel Okafor", topic: "Midterm review", where: "McLennan, 4th floor", at: F.daniel },
+                ]
+                  .filter((p) => f >= p.at)
+                  .map((p) => (
+                    <m.li
+                      key={p.name}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      style={courseVars("COMP 251")}
+                      className="arrive flex items-center gap-2.5 py-2.5"
+                    >
+                      <Avatar name={p.name} course="COMP 251" size={28} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13.5px] font-semibold">{p.name}</span>
+                        <span className="block truncate text-[12.5px] text-ink-2">
+                          {p.topic} <span className="text-ink-3">in {p.where}</span>
+                        </span>
+                      </span>
+                      <span className={cn("rounded-md px-2 py-1 text-[12px] font-semibold text-ink-2", p.name === "Daniel Okafor" && f >= F.msg - 4 && "bg-paper-2 text-ink")}>
+                        Message
+                      </span>
+                    </m.li>
+                  ))}
+              </ul>
+              <div className="mt-4 flex flex-col gap-1.5">
+                <AnimatePresence initial={false}>
+                  {f >= F.msg ? (
+                    <Note key="a" from="Daniel">
+                      want to do Q2 together?
+                    </Note>
+                  ) : null}
+                  {f >= F.reply ? (
+                    <Note key="b" mine>
+                      yes, come up to the 3rd floor
+                    </Note>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
+  );
+}
+
+function FakeField({ label, active, mono, className, children }: { label: string; active: boolean; mono?: boolean; className?: string; children: ReactNode }) {
+  return (
+    <div className={className}>
+      <p className="mb-1 text-[12px] font-semibold text-ink-2">{label}</p>
+      <div className={cn("flex h-10 items-center rounded-lg border-[1.5px] bg-paper px-3 text-[14px]", active ? "border-ink ring-[3px] ring-pen/20" : "border-rule-strong")}>
+        <span className={cn("truncate", mono && "code uppercase")}>{children}</span>
+        {active ? <span className="caret ml-px h-4 w-[2px] shrink-0 bg-pen" /> : null}
+      </div>
+    </div>
+  );
+}
+
+function Note({ from, mine, children }: { from?: string; mine?: boolean; children: ReactNode }) {
+  return (
+    <m.p
+      layout
+      initial={{ opacity: 0, y: 8, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 420, damping: 30 }}
+      style={{ transformOrigin: mine ? "bottom right" : "bottom left" }}
+      className={cn(
+        "max-w-[80%] rounded-[14px] px-3 py-1.5 text-[13.5px]",
+        mine ? "self-end rounded-br-[4px] bg-ink text-paper" : "self-start rounded-bl-[4px] border border-rule-strong bg-paper-2",
+      )}
+    >
+      {from ? <span className="mr-1.5 font-semibold">{from}</span> : null}
+      {children}
+    </m.p>
   );
 }
 
 /* ---------- Rooms ---------- */
 
-const REACTIONS = ["👏", "🔥", "💡", "✅"];
+function Rooms() {
+  return (
+    <section id="rooms" aria-labelledby="rooms-title" className="scroll-mt-6 bg-paper-2">
+      <div className="mx-auto max-w-[1180px] px-4 py-20 sm:px-8 sm:py-28">
+        <h2 id="rooms-title" className="title max-w-[14ch] text-[clamp(38px,5.4vw,60px)]">
+          One timer for the whole{" "}
+          <span className="hl" style={courseVars("COMP 251")}>
+            group
+          </span>
+          .
+        </h2>
+        <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:gap-14">
+          <RoomPreview />
+          <div className="space-y-6 lg:pt-2">
+            <p className="text-[17px] leading-relaxed text-ink-2">
+              Start a focus round and everyone's countdown ends at the same second, on every laptop and phone in the room.
+            </p>
+            <ul className="space-y-4 border-t border-rule-strong pt-6 text-[15.5px]">
+              <li>
+                <p className="font-semibold">A shared whiteboard</p>
+                <p className="text-ink-2">Work a problem out together. Everyone sees each stroke as it's drawn.</p>
+              </li>
+              <li>
+                <p className="font-semibold">A six-letter code</p>
+                <p className="text-ink-2">Send it to your group. Anyone with it can join.</p>
+              </li>
+              <li>
+                <p className="font-semibold">Chat that stays with the room</p>
+                <p className="text-ink-2">Plus quick reactions when someone finally gets it.</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-/** A study room: the tree draws itself, the timer counts, reactions float up. */
-function RoomDemo() {
+/** A study room: the tree draws itself in pen, the timer fills with ink as it counts down. */
+function RoomPreview() {
   const ref = useRef<HTMLDivElement>(null);
   const visible = useInView(ref, { margin: "-15% 0px" });
-  // The drawing plays once and then stays; only the timer and reactions keep going.
   const drawn = useInView(ref, { margin: "-15% 0px", once: true });
   const reduced = useReducedMotion();
-  const [secs, setSecs] = useState(18 * 60 + 42);
-  const [pops, setPops] = useState<{ id: number; e: string; x: number }[]>([]);
+  const [secs, setSecs] = useState(9 * 60 + 42);
   useLoop(() => setSecs((s) => (s > 0 ? s - 1 : 25 * 60)), 1000, visible);
-  useLoop(
-    () => {
-      const id = Date.now();
-      setPops((p) => [...p.slice(-3), { id, e: REACTIONS[id % REACTIONS.length]!, x: 15 + (id % 60) }]);
-    },
-    2600,
-    visible,
-  );
-  const progress = 1 - secs / 1500;
+  const fill = Math.max(3, (1 - secs / 1500) * 100);
+  const clock = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
+  const show = drawn || reduced;
+
+  const edges = ["M160 44 L108 96", "M160 44 L212 96", "M108 96 L76 148", "M108 96 L136 148", "M212 96 L244 148"];
   const nodes = [
-    [160, 46, "8"],
-    [110, 96, "3"],
-    [210, 96, "10"],
-    [80, 146, "1"],
-    [135, 146, "6"],
-    [240, 146, "14"],
+    [160, 44, "8"],
+    [108, 96, "3"],
+    [212, 96, "10"],
+    [76, 148, "1"],
+    [136, 148, "6"],
+    [244, 148, "14"],
   ] as const;
-  const draw = (delay: number) => ({
-    initial: { pathLength: reduced ? 1 : 0 },
-    animate: drawn || reduced ? { pathLength: 1 } : undefined,
-    transition: { duration: 0.7, delay, ease: "easeInOut" as const },
-  });
+  const draw = (i: number) => (show ? { className: "pen-draw", style: { "--len": 1, "--draw-delay": `${200 + i * 160}ms` } as CSSProperties } : { opacity: 0 });
 
   return (
-    <div ref={ref} style={courseVars("COMP 251")} className="sticker min-w-0 overflow-hidden rounded-[22px] bg-surface" aria-hidden>
-      <div className="flex items-center gap-2.5 border-b-2 border-ink px-4 py-3">
+    <div ref={ref} style={courseVars("COMP 251")} className="min-w-0 overflow-hidden rounded-[14px] border border-rule-strong bg-paper" aria-hidden>
+      <div className="flex items-center gap-3 border-b-2 border-ink px-4 py-3">
         <CourseTag code="COMP 251" size="sm" />
-        <span className="truncate text-[15px] font-bold">Finals grind</span>
-        <span className="ml-auto text-[12.5px] font-semibold tracking-wider text-ink-3 tabular">K7QX2M</span>
+        <span className="heading truncate text-[17px]">Finals grind</span>
+        <span className="code ml-auto text-[12px] tracking-wider text-ink-3">K7QX2M</span>
       </div>
-      <div className="grid sm:grid-cols-[minmax(0,1fr)_200px]">
-        <div className="relative bg-canvas p-3 sm:p-4">
-          <svg viewBox="0 0 320 200" className="w-full rounded-xl border-[1.5px] border-line bg-surface">
-            <defs>
-              <pattern id="lp-dots" width="14" height="14" patternUnits="userSpaceOnUse">
-                <circle cx="1" cy="1" r="0.8" className="fill-line-strong" />
-              </pattern>
-            </defs>
-            <rect width="320" height="200" fill="url(#lp-dots)" />
-            <g className="stroke-ink" strokeWidth="2.4" fill="none" strokeLinecap="round">
-              {(
-                [
-                  "M160 46 L110 96",
-                  "M160 46 L210 96",
-                  "M110 96 L80 146",
-                  "M110 96 L135 146",
-                  "M210 96 L240 146",
-                ] as const
-              ).map((d, i) => (
-                <m.path key={d} d={d} {...draw(0.2 + i * 0.18)} />
+      <div className="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]">
+        <div className="bg-paper-2 p-3 sm:p-4">
+          <svg viewBox="0 0 320 196" className="graph-paper w-full rounded-[10px] border border-rule-strong">
+            {/* A highlighter swipe across node 14, in the course ink. */}
+            <rect x="222" y="134" width="46" height="26" rx="5" fill="var(--course)" opacity={show ? 0.9 : 0} transform="rotate(-4 245 147)" style={{ transition: "opacity 400ms 1.6s" }} />
+            <g stroke="#1b2140" strokeWidth="2.3" fill="none" strokeLinecap="round">
+              {edges.map((d, i) => (
+                <path key={d} d={d} pathLength={1} {...draw(i)} />
+              ))}
+              {nodes.map(([x, y], i) => (
+                <circle key={`${x}-${y}`} cx={x} cy={y} r="14" pathLength={1} fill="#fff" {...draw(i + 1)} />
               ))}
             </g>
             {nodes.map(([x, y, n], i) => (
-              <m.g
+              <text
                 key={n}
-                initial={{ opacity: reduced ? 1 : 0, scale: reduced ? 1 : 0.4 }}
-                animate={drawn || reduced ? { opacity: 1, scale: 1 } : undefined}
-                transition={{ ...spring, delay: 0.1 + i * 0.12 }}
-                style={{ transformOrigin: `${x}px ${y}px` }}
+                x={x}
+                y={y + 5}
+                textAnchor="middle"
+                fontSize="14"
+                fontWeight="700"
+                fill="#1b2140"
+                fontFamily="Archivo Variable, sans-serif"
+                opacity={show ? 1 : 0}
+                style={{ transition: `opacity 300ms ${0.4 + i * 0.16}s` }}
               >
-                <circle cx={x} cy={y} r="15" className="fill-surface stroke-ink" strokeWidth="2.4" />
-                <text x={x} y={y + 5} textAnchor="middle" fontSize="14" fontWeight="700" className="fill-ink" fontFamily="Hanken Grotesk Variable, sans-serif">
-                  {n}
-                </text>
-              </m.g>
+                {n}
+              </text>
             ))}
-            <m.path d="M228 128 q 18 -30 46 -22" stroke="var(--course-ink)" strokeWidth="2.6" fill="none" strokeLinecap="round" {...draw(1.4)} />
-            <m.text
-              x="244"
-              y="96"
-              fontSize="13"
-              fontWeight="700"
-              fill="var(--course-ink)"
-              fontFamily="Hanken Grotesk Variable, sans-serif"
-              initial={{ opacity: reduced ? 1 : 0 }}
-              animate={drawn || reduced ? { opacity: 1 } : undefined}
-              transition={{ delay: 1.9 }}
-            >
+            <path d="M262 128 q 12 -26 40 -26" stroke="var(--pen)" strokeWidth="2" fill="none" strokeLinecap="round" pathLength={1} {...draw(8)} />
+            <text x="252" y="92" fontSize="13" fontStyle="italic" fontWeight="600" fill="var(--pen)" fontFamily="Archivo Variable, sans-serif" opacity={show ? 1 : 0} style={{ transition: "opacity 300ms 1.9s" }}>
               insert 14?
-            </m.text>
+            </text>
           </svg>
-          {pops.map((p) => (
-            <span key={p.id} className="float-up pointer-events-none absolute bottom-6 text-3xl" style={{ left: `${p.x}%` }}>
-              {p.e}
-            </span>
-          ))}
         </div>
-        <div className="border-t-2 border-ink p-4 sm:border-t-0 sm:border-l-2">
-          <span className="rounded-md bg-course-soft px-2 py-0.5 text-[12px] font-bold text-course">Focus</span>
-          <p className="display mt-2 text-[52px] leading-none tabular" style={{ fontStretch: "75%" }}>
-            {String(Math.floor(secs / 60)).padStart(2, "0")}:{String(secs % 60).padStart(2, "0")}
+        <div className="border-t border-rule p-4 sm:border-t-0 sm:border-l">
+          <p className="text-[12.5px] font-semibold text-ink-2">
+            <span className="hl" style={YOU}>
+              Focus 25
+            </span>{" "}
+            <span className="ml-1 font-medium text-ink-3">Break 5</span>
           </p>
-          <div className="mt-3 h-2 overflow-hidden rounded-full border-[1.5px] border-ink bg-surface-2">
-            <div className="h-full bg-course-fill transition-[width] duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
+          <div className="relative mt-3 h-[64px]">
+            <div className="ink-fill absolute inset-y-0 left-0 bg-course-band transition-[width] duration-700 ease-linear" style={{ width: `${fill}%` }} />
+            <p className="title relative px-2 pt-2 text-[50px] leading-none tabular">{clock}</p>
+            <p className="title absolute inset-0 px-2 pt-2 text-[50px] leading-none text-on-band tabular" style={{ clipPath: `inset(0 ${100 - fill}% 0 0)` }}>
+              {clock}
+            </p>
           </div>
-          <p className="mt-4 text-[12.5px] font-semibold text-ink-3">4 here now</p>
-          <div className="mt-1.5 flex -space-x-1.5">
+          <p className="mt-2 text-[12.5px] text-ink-3">Daniel started the timer</p>
+          <p className="mt-5 text-[12.5px] font-semibold text-ink-2">4 here now</p>
+          <div className="mt-2 flex -space-x-1.5">
             {["Maya Chen", "Daniel Okafor", "Emma Wilson", "Arjun Patel"].map((n) => (
-              <Avatar key={n} name={n} size={30} course="COMP 251" className="rounded-full ring-2 ring-surface" />
+              <Avatar key={n} name={n} size={30} course="COMP 251" className="rounded-full ring-2 ring-paper" />
             ))}
           </div>
         </div>

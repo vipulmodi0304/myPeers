@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Link2, LogOut } from "lucide-react";
-import { m } from "motion/react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Reactions } from "@/components/room/Reactions";
@@ -53,9 +52,9 @@ function JoinPrompt({ code, data }: { code: string; data: RoomDetail }) {
   });
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="sticker rounded-[24px] bg-surface p-7 text-center">
-        {data.room.courseCode ? <CourseTag code={data.room.courseCode} size="lg" /> : null}
-        <h1 className="display mt-4 text-[30px] leading-tight">{data.room.name}</h1>
+      <div className="rounded-[14px] border border-rule-strong bg-paper p-7 text-center shadow-sheet">
+        {data.room.courseCode ? <CourseTag code={data.room.courseCode} size="lg" swipe /> : null}
+        <h1 className="title mt-4 text-[32px]">{data.room.name}</h1>
         <p className="mt-1 text-sm text-ink-2">
           {data.room.memberCount} {data.room.memberCount === 1 ? "member" : "members"}. Join to use the shared whiteboard, timer and chat.
         </p>
@@ -100,7 +99,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
   };
 
   const board = (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col bg-canvas">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col bg-paper-2">
       <div className="min-h-0 flex-1">
         <Whiteboard roomId={roomId} initialStrokes={room.initialStrokes ?? []} emit={room.emit} userId={me!.id} />
       </div>
@@ -119,7 +118,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
 
   const peoplePanel = (
     <section aria-label="People in this room">
-      <h2 className="text-[13px] font-semibold text-ink-3">
+      <h2 className="text-[13px] font-semibold text-ink-2">
         {room.here.length} here now, {data.members.length} {data.members.length === 1 ? "member" : "members"}
       </h2>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -135,17 +134,19 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
 
   return (
     <div className="flex h-full flex-col" style={courseVars(data.room.courseCode)}>
-      <header className="flex h-16 shrink-0 items-center gap-x-3 border-b border-line bg-surface px-4 md:px-5">
-        <Link to="/app/rooms" className="grid size-9 place-items-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink" aria-label="All rooms">
+      <header className="flex h-16 shrink-0 items-center gap-x-3 border-b-2 border-ink bg-paper px-4 md:px-5">
+        <Link to="/app/rooms" className="grid size-9 place-items-center rounded-lg text-ink-2 hover:bg-paper-2 hover:text-ink" aria-label="All rooms">
           <ArrowLeft className="size-5" />
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          {data.room.courseCode ? <CourseTag code={data.room.courseCode} size="md" className="hidden sm:inline-flex" /> : null}
-          <h1 className="display truncate text-[22px] leading-none">{data.room.name}</h1>
+          {data.room.courseCode && !data.room.name.toUpperCase().replace(/\s/g, "").startsWith(data.room.courseCode.replace(/\s/g, "")) ? (
+            <CourseTag code={data.room.courseCode} size="md" className="hidden sm:inline-block" />
+          ) : null}
+          <h1 className="title truncate text-[24px]">{data.room.name}</h1>
         </div>
         <div className="flex items-center gap-2">
           <span className="hidden text-[13px] text-ink-2 sm:inline">
-            Code <strong className="tracking-wider text-ink tabular">{code}</strong>
+            Code <strong className="code tracking-wider text-ink">{code}</strong>
           </span>
           <Button variant="secondary" size="sm" onClick={invite} aria-label="Copy invite link">
             {copied ? <Check className="size-3.5" /> : <Link2 className="size-3.5" />}
@@ -167,7 +168,7 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
       ) : isDesktop ? (
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_340px]">
           {board}
-          <aside className="flex min-h-0 flex-col gap-5 border-l border-line bg-surface p-5">
+          <aside className="flex min-h-0 flex-col gap-5 border-l border-rule bg-paper p-5">
             {timer}
             {peoplePanel}
             <RoomChat code={code} roomId={roomId} meId={me!.id} />
@@ -176,18 +177,19 @@ function LiveRoom({ code, room }: { code: string; room: ReturnType<typeof useRoo
       ) : (
         // Small screens: timer on top, then tabs for the board, chat and people.
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="border-b border-line p-3">{compactTimer}</div>
-          <div role="tablist" aria-label="Room views" className="flex shrink-0 border-b border-line">
+          <div className="border-b border-rule p-3">{compactTimer}</div>
+          <div role="tablist" aria-label="Room views" className="flex shrink-0 border-b border-rule">
             {(["board", "chat", "people"] as const).map((t) => (
               <button
                 key={t}
                 role="tab"
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className={cn("relative flex-1 py-3 text-sm font-semibold text-ink-2", tab === t && "text-ink")}
+                className={cn("flex-1 py-3 text-sm font-semibold text-ink-3", tab === t && "text-ink")}
               >
-                {t === "board" ? "Whiteboard" : t === "chat" ? "Chat" : `People (${room.here.length})`}
-                {tab === t ? <m.span layoutId="room-tab" className="absolute inset-x-4 bottom-0 h-[3px] rounded-full bg-ink" /> : null}
+                <span key={String(tab === t)} className={tab === t ? "hl swipe" : undefined} style={{ "--hl": "var(--you)" } as CSSProperties}>
+                  {t === "board" ? "Whiteboard" : t === "chat" ? "Chat" : `People (${room.here.length})`}
+                </span>
               </button>
             ))}
           </div>

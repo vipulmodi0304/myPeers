@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar, Button, Dialog, Field, Input } from "@/components/ui";
@@ -12,17 +12,19 @@ export default function ProfilePage() {
   if (!me) return null;
   return (
     <div className="mx-auto max-w-[640px] space-y-10 px-4 py-6 sm:px-8 sm:py-8">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 border-b-2 border-ink pb-5">
         <Avatar name={me.name} size={64} />
         <div className="min-w-0">
-          <h1 className="display truncate text-[34px] leading-none">{me.name}</h1>
-          <p className="text-sm text-ink-2">{me.isDemo ? "Demo account" : me.email}</p>
+          <h1 className="title truncate text-[38px]">{me.name}</h1>
+          <p className="mt-1.5 text-sm text-ink-2">{me.isDemo ? "Demo account" : me.email}</p>
         </div>
       </div>
       <NameForm me={me} />
       {me.isDemo ? (
-        <section className="sticker rounded-[22px] bg-surface p-5 sm:p-6">
-          <h2 className="display text-[22px]">This is a demo account</h2>
+        <section className="rounded-xl bg-paper-2 p-5 sm:p-6">
+          <h2 className="heading text-[22px]">
+            This is a <span className="hl" style={{ "--hl": "var(--you)" } as CSSProperties}>demo</span> account
+          </h2>
           <p className="mt-1 text-sm text-ink-2">It has no password and is deleted after a day. McGill students can create a real account in under a minute.</p>
           <Link to="/signup" className="mt-4 inline-block">
             <Button>Sign up with McGill email</Button>
@@ -40,8 +42,8 @@ export default function ProfilePage() {
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="border-t-[1.5px] border-line pt-7">
-      <h2 className="display text-[22px] leading-tight">{title}</h2>
+    <section className="border-t border-rule pt-7">
+      <h2 className="heading text-[22px]">{title}</h2>
       {description ? <p className="mt-0.5 text-sm text-ink-2">{description}</p> : null}
       <div className="mt-4">{children}</div>
     </section>
@@ -127,7 +129,7 @@ function DangerZone() {
   });
   return (
     <Section title="Delete account" description="Removes your account, check-in, messages, files and rooms you're alone in. This can't be undone.">
-      <Button variant="danger" className="border-2 border-red/40" onClick={() => setOpen(true)}>
+      <Button variant="danger" className="border-[1.5px] border-red/40" onClick={() => setOpen(true)}>
         Delete my account
       </Button>
       <Dialog open={open} onOpenChange={setOpen} title="Delete your account?" description="Enter your password to confirm. Everything is removed right away.">

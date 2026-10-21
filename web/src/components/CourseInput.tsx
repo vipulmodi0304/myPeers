@@ -63,7 +63,7 @@ export function CourseInput({
         autoFocus={autoFocus}
         placeholder={placeholder}
         value={value}
-        className={cn(inputClass, "course-code text-[17px] uppercase placeholder:font-semibold placeholder:text-ink-3")}
+        className={cn(inputClass, "code text-[16px] uppercase placeholder:text-ink-3")}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
@@ -91,7 +91,7 @@ export function CourseInput({
         <ul
           id={listId}
           role="listbox"
-          className="anim-menu absolute z-30 mt-1.5 max-h-64 w-full min-w-44 overflow-auto rounded-2xl border-2 border-ink bg-surface p-1.5 shadow-hard"
+          className="anim-menu absolute z-30 mt-1.5 max-h-64 w-full min-w-44 overflow-auto rounded-[10px] border border-rule-strong bg-paper p-1.5 shadow-sheet"
         >
           {options.map((c, i) => (
             <li
@@ -104,9 +104,9 @@ export function CourseInput({
                 pick(c);
               }}
               onMouseEnter={() => setActive(i)}
-              style={courseVars(c)} className={cn("course-code cursor-pointer rounded-xl px-2.5 py-1.5 text-[16px] text-course", i === active && "bg-surface-2")}
+              style={courseVars(c)} className={cn("code cursor-pointer rounded-md px-2.5 py-1.5 text-[15px]", i === active && "bg-paper-2")}
             >
-              {c}
+              <span className={cn(i === active ? "hl" : "hl hl-low")}>{c}</span>
             </li>
           ))}
         </ul>

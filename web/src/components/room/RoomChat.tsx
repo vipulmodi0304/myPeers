@@ -57,7 +57,7 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
                   {grouped ? null : (
                     <p className="text-[13px]">
                       <span className="font-semibold">{m.senderId === meId ? "You" : m.senderName}</span>{" "}
-                      <span className="text-ink-2">{clock(m.createdAt)}</span>
+                      <span className="code text-[11.5px] text-ink-3">{clock(m.createdAt)}</span>
                     </p>
                   )}
                   <p className="text-[14px] leading-snug break-words whitespace-pre-wrap">{m.body}</p>
@@ -68,7 +68,7 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
         )}
       </div>
       <form
-        className="flex gap-2 border-t border-line pt-3"
+        className="flex gap-2 border-t border-rule pt-3"
         onSubmit={(e) => {
           e.preventDefault();
           if (body.trim()) send.mutate();
@@ -84,9 +84,9 @@ export function RoomChat({ code, roomId, meId }: { code: string; roomId: string;
           onChange={(e) => setBody(e.target.value)}
           placeholder="Message the room"
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 rounded-full border-[1.5px] border-line-strong bg-surface px-4 text-[14px] placeholder:text-ink-3 focus:border-ink focus:ring-4 focus:ring-focus/15 focus:outline-none"
+          className="h-10 min-w-0 flex-1 rounded-lg border-[1.5px] border-rule-strong bg-paper px-3.5 text-[14px] placeholder:text-ink-3 hover:border-ink-3 focus:border-ink focus:ring-[3px] focus:ring-pen/20 focus:outline-none"
         />
-        <Button type="submit" size="icon" className="h-10 w-10" aria-label="Send" disabled={!body.trim()} loading={send.isPending}>
+        <Button type="submit" size="icon" className="h-10 w-11" aria-label="Send" disabled={!body.trim()} loading={send.isPending}>
           {send.isPending ? null : <SendHorizontal className="size-4" />}
         </Button>
       </form>
