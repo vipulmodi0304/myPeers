@@ -1,5 +1,6 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type MutableRefObject } from "react";
+import { Burst, Confetti } from "@/components/doodles";
 import { Button } from "@/components/ui";
 import { cn, mmss } from "@/lib/format";
 import type { TimerState } from "@/lib/types";
@@ -132,7 +133,16 @@ export function RoomTimer({
   }
 
   return (
-    <section aria-label="Shared timer" className="rounded-xl bg-paper-2 p-4">
+    <section aria-label="Shared timer" className="relative rounded-xl bg-paper-2 p-4">
+      {/* A finished focus round is worth a little celebration (once, when it hits zero). */}
+      {done && timer.mode === "focus" ? (
+        <>
+          <Confetti />
+          <span className="absolute top-[38%] left-1/2">
+            <Burst colors={["var(--pen)", "var(--course-ink, var(--pen))", "var(--c6-ink)"]} />
+          </span>
+        </>
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         <div role="radiogroup" aria-label="Timer mode" className="inline-flex gap-1 rounded-lg border-[1.5px] border-rule-strong p-1">
           {(["focus", "break"] as const).map((mode) => (

@@ -4,6 +4,7 @@ import { DoorOpen, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CourseInput } from "@/components/CourseInput";
+import { DoorDoodle } from "@/components/doodles";
 import { Button, CourseTag, Dialog, Empty, Field, Input, PageHeader, Spinner } from "@/components/ui";
 import { courseVars } from "@/lib/courseColor";
 import { api, errorMessage } from "@/lib/api";
@@ -47,7 +48,7 @@ export default function RoomsPage() {
           </div>
         ) : rooms.length === 0 ? (
           <div className="rounded-xl border-[1.5px] border-dashed border-rule-strong">
-            <Empty icon={<Users className="size-7" />} title="You're not in any rooms yet" action={<Button onClick={() => setCreating(true)}>Create a room</Button>}>
+            <Empty icon={<DoorDoodle size={58} />} title="You're not in any rooms yet" action={<Button onClick={() => setCreating(true)}>Create a room</Button>}>
               Create one and share its code with your study group, or open one with a code someone sent you.
             </Empty>
           </div>

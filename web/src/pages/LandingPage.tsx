@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Burst, Heart, Sparkle, Squiggle, Star } from "@/components/doodles";
 import { Avatar, Button, CourseTag, Logo } from "@/components/ui";
 import { api } from "@/lib/api";
 import { canUseApp, useMe } from "@/lib/auth";
 import { courseVars } from "@/lib/courseColor";
-import { cn } from "@/lib/format";
+import { cn, initials } from "@/lib/format";
 import { useStartDemo } from "./AuthPages";
 
 /*
@@ -119,7 +120,8 @@ export function LandingPage() {
 
       <main>
         {/* ---------- Hero: the headline, then the board itself ---------- */}
-        <section className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-8 sm:pt-10">
+        <section className="relative mx-auto max-w-[1180px] px-4 pt-6 sm:px-8 sm:pt-10">
+          <HeroCluster />
           <h1 className="title text-[clamp(50px,10.5vw,96px)]">
             <span className="sr-only">See which McGill classmates are studying your course right now.</span>
             <span aria-hidden className="block">
@@ -130,7 +132,7 @@ export function LandingPage() {
               right now?
             </span>
           </h1>
-          <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,34rem)_1fr] lg:items-end">
+          <div className="mt-7 grid gap-6 lg:max-w-[34rem] lg:gap-4">
             <div>
               <p className="max-w-[34rem] text-[17px] leading-relaxed text-ink-2 sm:text-[18px]">
                 Check in with the course you're on and where you are. Everyone else on it shows up instantly. Message them, or open a room with one
@@ -138,7 +140,8 @@ export function LandingPage() {
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">{actions()}</div>
             </div>
-            <p className="text-[13.5px] text-ink-3 lg:justify-self-end lg:pb-3">
+            <MiniCluster />
+            <p className="text-[13.5px] text-ink-3 lg:col-start-1">
               {stats && stats.studyingNow > 0 ? (
                 <span className="inline-flex items-center gap-1.5 font-medium text-ink-2">
                   <span className="live-dot size-2 rounded-full bg-live" />
@@ -158,13 +161,20 @@ export function LandingPage() {
         {/* ---------- Close ---------- */}
         <section className="mx-auto max-w-[1180px] px-4 pt-6 pb-20 sm:px-8 sm:pb-28">
           <div className="border-t-2 border-ink pt-12 sm:pt-16">
-            <p className="title max-w-[16ch] text-[clamp(42px,8vw,88px)]">
-              Find out who's studying{" "}
-              <span className="hl" style={YOU}>
-                your course
-              </span>
-              .
-            </p>
+            <div className="relative">
+              <p className="title max-w-[16ch] text-[clamp(42px,8vw,88px)]">
+                Find out who's studying
+                <br />
+                <span className="relative inline-block whitespace-nowrap">
+                  <span className="hl" style={YOU}>
+                    your course
+                  </span>
+                  .
+                  <Squiggle size={150} delay={400} className="absolute -bottom-5 left-2 w-[62%]" />
+                </span>
+              </p>
+              <CloseFaces />
+            </div>
             <div className="mt-9 flex flex-wrap items-center gap-3">{actions()}</div>
           </div>
         </section>
@@ -196,9 +206,17 @@ function CyclingCode() {
   useLoop(() => setI((n) => (n + 1) % CYCLE.length), 2600);
   const code = CYCLE[i]!;
   return (
-    <span key={code} style={courseVars(code)} className="hl swipe inline-block whitespace-nowrap" aria-hidden>
+    <m.span
+      key={code}
+      style={courseVars(code)}
+      className="hl swipe inline-block whitespace-nowrap"
+      aria-hidden
+      initial={{ y: "-0.35em", rotate: -3, opacity: 0 }}
+      animate={{ y: 0, rotate: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 520, damping: 14 }}
+    >
       {code}
-    </span>
+    </m.span>
   );
 }
 
@@ -256,7 +274,14 @@ function LiveBoard() {
               )}
             >
               <span className="flex min-w-0 items-center gap-2.5">
-                <Avatar name={p.name} course={p.course} size={28} />
+                <m.span
+                  initial={p.fresh ? { scale: 0.2, rotate: -25 } : false}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 12, delay: 0.1 }}
+                  className="inline-flex"
+                >
+                  <Avatar name={p.name} course={p.course} size={28} />
+                </m.span>
                 <span className="truncate text-[15px] font-semibold">{p.name}</span>
               </span>
               <span className="text-right md:text-left">
@@ -382,7 +407,8 @@ function Walkthrough({ f }: { f: number }) {
             </m.div>
           ) : (
             <m.div key="board" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-              <div style={courseVars("COMP 251")} className="flex items-center gap-3 rounded-xl border-2 border-ink p-3">
+              <div style={courseVars("COMP 251")} className="relative flex items-center gap-3 rounded-xl border-2 border-ink p-3">
+                <Burst colors={["var(--pen)", "var(--c4-ink)", "var(--c6-ink)"]} />
                 <CourseTag code="COMP 251" size="md" swipe />
                 <div className="min-w-0">
                   <p className="text-[11.5px] font-semibold text-ink-3">You're checked in</p>
@@ -403,8 +429,9 @@ function Walkthrough({ f }: { f: number }) {
                   .map((p) => (
                     <m.li
                       key={p.name}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, x: -14 }}
                       animate={{ opacity: 1, x: 0 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 18 }}
                       style={courseVars("COMP 251")}
                       className="arrive flex items-center gap-2.5 py-2.5"
                     >
@@ -461,7 +488,7 @@ function Note({ from, mine, children }: { from?: string; mine?: boolean; childre
       layout
       initial={{ opacity: 0, y: 8, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 420, damping: 30 }}
+      transition={{ type: "spring", stiffness: 480, damping: 17 }}
       style={{ transformOrigin: mine ? "bottom right" : "bottom left" }}
       className={cn(
         "max-w-[80%] rounded-[14px] px-3 py-1.5 text-[13.5px]",
@@ -474,7 +501,171 @@ function Note({ from, mine, children }: { from?: string; mine?: boolean; childre
   );
 }
 
+/* ---------- The desk: notes, faces and doodles beside the headline ---------- */
+
+const pop = (delay: number) => ({
+  initial: { opacity: 0, scale: 0.4, y: 28 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  transition: { type: "spring" as const, stiffness: 360, damping: 14, delay },
+});
+
+/**
+ * Something lying on the desk. It pops in on a spring, drifts, tilts when you
+ * hover it, and you can pick it up and toss it: it springs back to its spot.
+ */
+function DeskItem({ at, delay, tilt = 0, className, children }: { at: CSSProperties; delay: number; tilt?: number; className?: string; children: ReactNode }) {
+  return (
+    <m.div
+      className={cn("absolute cursor-grab touch-none active:cursor-grabbing", className)}
+      style={at}
+      {...pop(delay)}
+      drag
+      dragSnapToOrigin
+      dragElastic={0.5}
+      dragTransition={{ bounceStiffness: 420, bounceDamping: 14 }}
+      whileHover={{ scale: 1.05, rotate: -tilt * 0.6 }}
+      whileDrag={{ scale: 1.12, rotate: tilt * 2, zIndex: 20 }}
+    >
+      <div className="bob" style={{ "--tilt": `${tilt}deg`, animationDelay: `${-delay * 3}s` } as CSSProperties}>
+        {children}
+      </div>
+    </m.div>
+  );
+}
+
+function PassedNote({ from, course, width = 232, children }: { from: string; course: string; width?: number; children: ReactNode }) {
+  return (
+    <div className="paper-shadow">
+      <div className="paper-note px-4 pt-3 pb-6" style={{ width }}>
+        <p className="hand text-[17px] leading-[22px] font-medium">{children}</p>
+        <p className="mt-1.5 flex items-center gap-2 text-[12px] font-semibold text-[#5c6170]">
+          {from} <CourseTag code={course} size="sm" />
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PaperFace({ name, course, size }: { name: string; course: string; size: number }) {
+  return (
+    <span
+      style={{ ...courseVars(course), width: size, height: size, fontSize: size * 0.34 }}
+      className="paper-face grid place-items-center rounded-full bg-course-band font-extrabold text-on-band"
+      title={`${name}, ${course}`}
+    >
+      {initials(name)}
+    </span>
+  );
+}
+
+function StickyNote({ course, children, sub }: { course: string; children: ReactNode; sub: string }) {
+  return (
+    // Real sticky notes are pale paper in both themes, so these colours don't follow dark mode.
+    <div style={{ "--sticky": STICKY[course.length % STICKY.length] } as CSSProperties} className="sticky-note w-[178px] p-3.5 pb-4">
+      <p className="hand text-[17px] leading-snug font-semibold">{children}</p>
+      <p className="mt-2 text-[11.5px] font-semibold text-[#5c6170]">{sub}</p>
+    </div>
+  );
+}
+
+const STICKY = ["#dff3cf", "#ffe3f1", "#dcefff"];
+
+function TypingDots() {
+  return (
+    <span className="ml-1 inline-flex gap-[3px] align-middle" aria-hidden>
+      {[0, 0.15, 0.3].map((d) => (
+        <i key={d} className="typing-dot size-[5px] rounded-full bg-[#1b1d22]" style={{ animationDelay: `${d}s` }} />
+      ))}
+    </span>
+  );
+}
+
+/** Wide screens: the desk beside the headline, in the space its shorter lines leave. */
+function HeroCluster() {
+  return (
+    <div className="pointer-events-none absolute top-[150px] right-8 hidden h-[350px] w-[390px] lg:block" aria-hidden>
+      <div className="pointer-events-auto">
+        <DeskItem at={{ left: 40, top: 0 }} delay={0.35} tilt={-3}>
+          <PassedNote from="Maya" course="COMP 251">
+            anyone doing A3 tonight?
+            <TypingDots />
+          </PassedNote>
+        </DeskItem>
+        <DeskItem at={{ right: 0, top: -30 }} delay={0.5} tilt={8}>
+          <PaperFace name="Noah Kim" course="COMP 302" size={54} />
+        </DeskItem>
+        <DeskItem at={{ right: 4, top: 104 }} delay={0.62} tilt={-6}>
+          <PaperFace name="Daniel Okafor" course="COMP 251" size={70} />
+        </DeskItem>
+        <DeskItem at={{ left: 0, top: 136 }} delay={0.74} tilt={4}>
+          <StickyNote course="COMP 251" sub="Finals grind · COMP 251">
+            25:00 focus, starting now!
+          </StickyNote>
+        </DeskItem>
+        <DeskItem at={{ left: 206, top: 206 }} delay={0.86} tilt={-2}>
+          <PassedNote from="Sofia" course="MATH 240" width={176}>
+            saving you a seat in Redpath
+          </PassedNote>
+        </DeskItem>
+      </div>
+      <Star size={28} delay={1300} className="absolute top-[100px] left-[278px] text-pen" />
+      <Heart size={22} delay={1500} className="absolute top-[268px] left-[176px] text-[var(--c6-ink)]" />
+      <Sparkle size={20} delay={1700} className="absolute top-[-30px] left-[150px] text-pen" />
+      <p className="pen-note absolute top-[300px] left-[10px] rotate-[-4deg] text-[14px]">go on, move them around</p>
+    </div>
+  );
+}
+
+/** Phones and tablets: a smaller desk between the buttons and the board. */
+function MiniCluster() {
+  return (
+    <div className="relative h-[150px] lg:hidden" aria-hidden>
+      <DeskItem at={{ left: 0, top: 8 }} delay={0.4} tilt={-3}>
+        <PassedNote from="Maya" course="COMP 251" width={200}>
+          anyone doing A3 tonight?
+        </PassedNote>
+      </DeskItem>
+      <DeskItem at={{ left: 214, top: 0 }} delay={0.55} tilt={8}>
+        <PaperFace name="Daniel Okafor" course="COMP 251" size={58} />
+      </DeskItem>
+      <DeskItem at={{ left: 250, top: 70 }} delay={0.7} tilt={-6}>
+        <PaperFace name="Noah Kim" course="COMP 302" size={44} />
+      </DeskItem>
+      <Star size={22} delay={1100} className="absolute top-[96px] left-[200px] text-pen" />
+    </div>
+  );
+}
+
+/** The close: a few faces waiting on the desk. */
+function CloseFaces() {
+  return (
+    <div className="pointer-events-none absolute top-0 right-0 hidden h-full w-[300px] lg:block" aria-hidden>
+      <div className="pointer-events-auto">
+        <DeskItem at={{ right: 150, top: 20 }} delay={0.2} tilt={-6}>
+          <PaperFace name="Léa Tremblay" course="ECON 208" size={64} />
+        </DeskItem>
+        <DeskItem at={{ right: 40, top: 0 }} delay={0.35} tilt={7}>
+          <PaperFace name="Arjun Patel" course="COMP 206" size={78} />
+        </DeskItem>
+        <DeskItem at={{ right: 90, top: 110 }} delay={0.5} tilt={-3}>
+          <PaperFace name="Emma Wilson" course="COMP 251" size={56} />
+        </DeskItem>
+      </div>
+      <p className="pen-note absolute top-[190px] right-[30px] rotate-[-4deg] text-[16px]">
+        see you on the board <Heart size={18} delay={900} className="inline-block align-[-3px] text-[var(--c6-ink)]" />
+      </p>
+    </div>
+  );
+}
+
 /* ---------- Rooms ---------- */
+
+const REACTIONS = [
+  { e: "👏", who: "Maya" },
+  { e: "💡", who: "Daniel" },
+  { e: "🔥", who: "Emma" },
+  { e: "✅", who: "Arjun" },
+];
 
 function Rooms() {
   return (
@@ -521,7 +712,18 @@ function RoomPreview() {
   const drawn = useInView(ref, { margin: "-15% 0px", once: true });
   const reduced = useReducedMotion();
   const [secs, setSecs] = useState(9 * 60 + 42);
+  const [pops, setPops] = useState<{ id: number; e: string; who: string; x: number }[]>([]);
   useLoop(() => setSecs((s) => (s > 0 ? s - 1 : 25 * 60)), 1000, visible);
+  // Someone in the room reacts every few seconds; the emoji floats up over the board.
+  useLoop(
+    () => {
+      const id = Date.now();
+      const r = REACTIONS[id % REACTIONS.length]!;
+      setPops((p) => [...p.slice(-3), { id, e: r.e, who: r.who, x: 12 + (id % 62) }]);
+    },
+    2700,
+    visible,
+  );
   const fill = Math.max(3, (1 - secs / 1500) * 100);
   const clock = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
   const show = drawn || reduced;
@@ -545,7 +747,13 @@ function RoomPreview() {
         <span className="code ml-auto text-[12px] tracking-wider text-ink-3">K7QX2M</span>
       </div>
       <div className="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]">
-        <div className="bg-paper-2 p-3 sm:p-4">
+        <div className="relative overflow-hidden bg-paper-2 p-3 sm:p-4">
+          {pops.map((p) => (
+            <span key={p.id} className="float-up pointer-events-none absolute bottom-4 z-10 flex flex-col items-center" style={{ left: `${p.x}%` }}>
+              <span className="text-3xl">{p.e}</span>
+              <span className="hand rounded bg-ink/85 px-1.5 text-[11px] font-semibold text-paper">{p.who}</span>
+            </span>
+          ))}
           <svg viewBox="0 0 320 196" className="graph-paper w-full rounded-[10px] border border-rule-strong">
             {/* A highlighter swipe across node 14, in the course ink. */}
             <rect x="222" y="134" width="46" height="26" rx="5" fill="var(--course)" opacity={show ? 0.9 : 0} transform="rotate(-4 245 147)" style={{ transition: "opacity 400ms 1.6s" }} />

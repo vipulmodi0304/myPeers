@@ -9,6 +9,7 @@ import { router } from "./router";
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource-variable/archivo/wdth-italic.css";
 import "@fontsource/fragment-mono/400.css";
+import "@fontsource-variable/shantell-sans/full.css";
 import "./styles.css";
 
 const queryClient = new QueryClient({

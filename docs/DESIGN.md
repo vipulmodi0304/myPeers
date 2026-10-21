@@ -56,11 +56,12 @@ typography:
     fontSize: "14.5px"
     fontWeight: 400
     fontFeature: '"tnum"'
-  pen-note:
-    fontFamily: "Archivo Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "15px"
+  hand:
+    fontFamily: "Shantell Sans Variable, Archivo Variable, sans-serif"
+    fontSize: "17px"
     fontWeight: 500
-    fontVariation: '"wdth" 96'
+    lineHeight: 1.3
+    fontVariation: '"INFM" 60, "BNCE" 40'
 rounded:
   sm: "6px"
   md: "8px"
@@ -117,6 +118,7 @@ The landing page is the loudest surface: a 96px wide-black headline whose course
 - Archivo set wide and black for titles, Archivo for the interface, Fragment Mono for data (course codes, room codes, times).
 - Flat: depth only for things that float over the page (menus, dialogs, toasts).
 - Motion means "this just happened": the swipe and the pen stroke.
+- On the landing page, a desk of passed notes, sticky notes and paper faces sits beside the headline: they pop in on a spring, drift, and can be picked up and tossed (they spring back).
 
 ## Colors
 
@@ -150,6 +152,7 @@ A neutral printed page carrying saturated fluorescent inks, used only as bands b
 **Display Font:** Archivo Variable, width axis at 118 (with ui-sans-serif, system-ui)
 **Body Font:** Archivo Variable, normal width
 **Mono Font:** Fragment Mono
+**Hand Font:** Shantell Sans Variable (handwriting, with a bounce axis)
 
 **Character:** One grotesque in two widths: stretched and black for titles like a printed handout heading, normal for everything you read and click. The mono is only for data.
 
@@ -160,6 +163,7 @@ A neutral printed page carrying saturated fluorescent inks, used only as bands b
 - **Body** (400, 15px, 1.5): interface text; landing paragraphs at 17 to 18px with a 34rem measure.
 - **Label** (600, 13px): form labels and small group labels, sentence case.
 - **Code** (Fragment Mono 400, 11.5 to 20px): course codes, room codes, times, the running header.
+- **Hand** (Shantell Sans 500, 14 to 17px): anything written by a person on paper: passed notes, sticky notes, ballpoint margin notes. Never for interface labels.
 
 ### Named Rules
 **The Mono Means Data Rule.** Fragment Mono is for things a person reads as a code or a measurement. Never for headings, buttons or prose.
@@ -170,13 +174,14 @@ The landing page runs on a 1180px column with 16px (phone) to 32px gutters. The 
 
 ## Elevation & Depth
 
-The page is flat. Depth comes from paper tones (desk, paper, paper 2) and rules, not shadows. Only things floating above the page get a shadow: dropdown menus, dialogs and toasts.
+The page is flat. Depth comes from paper tones (desk, paper, paper 2) and rules, not shadows. Two kinds of thing get a shadow: interface that floats above the page (dropdown menus, dialogs, toasts), and paper objects lying on it (passed notes, sticky notes, paper faces). Those keep their real paper colours in dark mode.
 
 ### Shadow Vocabulary
-- **Sheet lift** (`box-shadow: 0 1px 2px rgb(17 18 20 / 0.06), 0 12px 32px -12px rgb(17 18 20 / 0.22)`): menus, dialogs and toasts only.
+- **Sheet lift** (`box-shadow: 0 1px 2px rgb(17 18 20 / 0.06), 0 12px 32px -12px rgb(17 18 20 / 0.22)`): menus, dialogs and toasts.
+- **Paper on the desk** (`drop-shadow(0 1px 1px rgb(17 18 20 / 0.1)) drop-shadow(0 9px 10px rgb(17 18 20 / 0.18))`): torn notes (on a wrapper, since the torn edge is a mask), sticky notes and paper faces.
 
 ### Named Rules
-**The Flat Sheet Rule.** Nothing printed on the page casts a shadow. If it isn't floating over the page, it gets a rule or a paper tone instead.
+**The Flat Sheet Rule.** Nothing printed on the page casts a shadow. If it isn't floating over the page or lying on it as a separate piece of paper, it gets a rule or a paper tone instead.
 
 ## Shapes
 
@@ -207,6 +212,18 @@ Controls have gently squared corners (8px), small toggles 6px, panels 12px, and 
 ### Room timer
 - **Signature:** the remaining time in wide black numerals. The course ink fills behind them as the round runs, and a clipped toner copy keeps the digits black wherever the ink has reached. It flashes three times at zero.
 
+### Desk items (landing)
+- **Passed note:** a scrap torn from a lined notebook (torn bottom edge, pale blue rules), handwriting, sender plus course code.
+- **Sticky note:** a pale pastel square with a curled corner.
+- **Paper face:** a circle cut from the course's ink with initials.
+- **Behaviour:** each pops in on a spring (staggered), drifts gently, tilts on hover, and can be dragged; let go and it springs back to its place.
+
+### Celebrations (app)
+- **Checking in:** a burst of pen marks (stars, sparkles, a heart) pops out around your check-in once.
+- **Finishing a focus round:** paper confetti in course inks plus the burst, once at zero.
+- **A classmate arriving:** their avatar pops onto the board on a spring.
+- **Empty states:** a ballpoint doodle (a sleepy face, a folded note, a door) above the message.
+
 ### Whiteboard
 - **Style:** graph paper (20px squares in pale print blue) on a fixed 16:10 board. Strokes are stored as fractions of the board, so its shape is the same on every screen.
 
@@ -217,6 +234,7 @@ Controls have gently squared corners (8px), small toggles 6px, panels 12px, and 
 - **Do** put a 2px toner rule under page titles and hairlines between rows.
 - **Do** give every course its ink through `courseVars()` so the code, avatars, rooms and timer agree.
 - **Do** write margin notes in ballpoint blue when something on the page needs explaining (for example, that the landing board shows sample classmates).
+- **Do** keep the bounce for arrivals and celebrations (a springy ease, about 1.5 overshoot), and keep routine transitions quick and plain.
 
 ### Don't:
 - **Don't** use yellow for a course, or a course ink for an action.

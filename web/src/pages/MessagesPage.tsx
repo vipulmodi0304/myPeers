@@ -1,9 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, FileText, MessageCircle, Paperclip, SendHorizontal, X } from "lucide-react";
+import { ArrowLeft, FileText, Paperclip, SendHorizontal, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { NoteDoodle, Smiley } from "@/components/doodles";
 import { Avatar, Button, CourseTag, Empty, Spinner } from "@/components/ui";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { useMe } from "@/lib/auth";
@@ -24,7 +25,7 @@ export default function MessagesPage() {
             <ThreadView key={userId} otherId={userId} />
           ) : (
             <div className="m-auto">
-              <Empty icon={<MessageCircle className="size-8" />} title="Pick a conversation">
+              <Empty icon={<NoteDoodle size={58} />} title="Pick a conversation">
                 Or find someone studying your course on the{" "}
                 <Link to="/app" className="font-semibold text-pen underline decoration-pen/40 hover:decoration-pen">
                   Study now
@@ -237,7 +238,7 @@ function ThreadView({ otherId }: { otherId: string }) {
           </div>
         ) : messages.length === 0 && other ? (
           <div className="grid h-full place-items-center">
-            <Empty title={`Say hi to ${other.name.split(" ")[0]}`}>
+            <Empty icon={<Smiley size={46} />} title={`Say hi to ${other.name.split(" ")[0]}`}>
               {other.checkIn ? `They're studying ${other.checkIn.courseCode} right now.` : "Start the conversation."}
             </Empty>
           </div>
@@ -256,7 +257,7 @@ function ThreadView({ otherId }: { otherId: string }) {
                     key={msg.id}
                     initial={{ opacity: 0, scale: 0.85, y: 8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 520, damping: 32 }}
+                    transition={{ type: "spring", stiffness: 520, damping: 20 }}
                     style={{ transformOrigin: mine ? "bottom right" : "bottom left" }}
                     className={cn("flex flex-col", mine ? "items-end" : "items-start", !grouped && "pt-2")}
                   >

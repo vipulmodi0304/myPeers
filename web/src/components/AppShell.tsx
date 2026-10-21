@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DropdownMenu } from "radix-ui";
 import { BookOpen, LogOut, MessageCircle, Monitor, Moon, Plus, Sun, User, Users, WifiOff } from "lucide-react";
+import { m } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -72,7 +73,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink key={to} to={to} end={end} className="group flex h-10 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold">
               {({ isActive }) => (
                 <>
-                  <Icon className={cn("size-[18px] shrink-0 transition-colors", isActive ? "text-ink" : "text-ink-3 group-hover:text-ink")} strokeWidth={isActive ? 2.3 : 2} />
+                  {/* The icon hops when its page opens. */}
+                  <m.span
+                    key={isActive ? "on" : "off"}
+                    className="inline-flex"
+                    initial={false}
+                    animate={isActive ? { y: [0, -5, 0], rotate: [0, -10, 0] } : undefined}
+                    transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+                  >
+                    <Icon className={cn("size-[18px] shrink-0 transition-colors", isActive ? "text-ink" : "text-ink-3 group-hover:text-ink")} strokeWidth={isActive ? 2.3 : 2} />
+                  </m.span>
                   {/* The active page gets highlighted: the band swipes in each time you switch. */}
                   <span className="flex-1">
                     <span

@@ -76,6 +76,8 @@
 @theme inline {
   --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Fragment Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-hand: "Shantell Sans Variable", "Archivo Variable", ui-sans-serif, sans-serif;
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);
   --color-desk: var(--desk);
@@ -162,12 +164,31 @@
 .tabular {
   font-variant-numeric: tabular-nums;
 }
-/* A note written in ballpoint in the margin. */
+/* A note written in ballpoint in the margin: Shantell Sans, a real handwriting face. */
 .pen-note {
   color: var(--pen);
-  font-style: italic;
+  font-family: var(--font-hand);
   font-weight: 500;
-  font-variation-settings: "wdth" 96;
+  font-variation-settings: "INFM" 70, "BNCE" 30;
+}
+/* Handwriting for passed notes and sticky notes. */
+.hand {
+  font-family: var(--font-hand);
+  font-variation-settings: "INFM" 60, "BNCE" 40;
+  letter-spacing: 0;
+}
+/* The letters themselves bob a little, using the font's bounce axis. */
+@keyframes hand-bounce {
+  0%,
+  100% {
+    font-variation-settings: "INFM" 60, "BNCE" -60;
+  }
+  50% {
+    font-variation-settings: "INFM" 60, "BNCE" 80;
+  }
+}
+.hand-bounce {
+  animation: hand-bounce 2.6s ease-in-out infinite;
 }
 
 /* ---------- The highlighter ---------- */
@@ -246,11 +267,11 @@
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 3.5C46 1.6 120 1.2 196 2.6L198.2 10 196.4 20 199 30 197 37.6C142 39 64 39.3 3.4 38.2L1.2 30 3.4 20 0.8 10Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 3.5C46 1.6 120 1.2 196 2.6L198.2 10 196.4 20 199 30 197 37.6C142 39 64 39.3 3.4 38.2L1.2 30 3.4 20 0.8 10Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
   transition:
-    scale 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 260ms var(--ease-bounce),
     filter 150ms;
 }
 .btn-ink:not(:disabled):hover::before {
-  scale: 1.035 1.08;
+  scale: 1.05 1.12;
   filter: saturate(1.25) brightness(0.98);
 }
 .btn-ink:not(:disabled):active::before {
@@ -263,6 +284,81 @@
 }
 .btn-ink:disabled:not([aria-busy="true"])::before {
   background: var(--rule);
+}
+
+/* ---------- Paper on the desk: passed notes and sticky notes ---------- */
+
+/* A scrap torn out of a lined notebook. Soft shadow: it is lying on the page, not printed on it. */
+.paper-note {
+  position: relative;
+  color: #1b1d22;
+  background-color: #fffefa;
+  background-image: repeating-linear-gradient(transparent 0 21px, #c9daf2 21px 22px);
+  background-position: 0 9px;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0H200V93L194 97 188 93 181 98 174 94 166 98 158 94 150 99 143 94 135 98 127 93 119 98 111 94 103 99 95 94 87 98 79 93 71 98 63 94 55 99 47 94 39 98 31 93 23 98 15 94 7 99 0 95Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0H200V93L194 97 188 93 181 98 174 94 166 98 158 94 150 99 143 94 135 98 127 93 119 98 111 94 103 99 95 94 87 98 79 93 71 98 63 94 55 99 47 94 39 98 31 93 23 98 15 94 7 99 0 95Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+}
+/* The torn edge is a mask, which would clip a shadow, so the shadow sits on a wrapper. */
+.paper-shadow {
+  filter: drop-shadow(0 1px 1px rgb(17 18 20 / 0.1)) drop-shadow(0 9px 10px rgb(17 18 20 / 0.18));
+}
+.dark .paper-shadow {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.5)) drop-shadow(0 12px 14px rgb(0 0 0 / 0.6));
+}
+/* A sticky note, with its bottom corner curling up. */
+.sticky-note {
+  position: relative;
+  color: #1b1d22;
+  background: linear-gradient(135deg, var(--sticky, #fff3a8) 0 82%, color-mix(in srgb, var(--sticky, #fff3a8) 70%, #b8a200) 82% 100%);
+  box-shadow:
+    0 1px 1px rgb(17 18 20 / 0.08),
+    0 14px 24px -12px rgb(17 18 20 / 0.35);
+  border-bottom-right-radius: 26px 10px;
+}
+/* A face cut out of coloured paper. */
+.paper-face {
+  box-shadow:
+    0 1px 1px rgb(17 18 20 / 0.1),
+    0 8px 16px -8px rgb(17 18 20 / 0.4);
+}
+.dark .sticky-note,
+.dark .paper-face {
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.4),
+    0 14px 26px -10px rgb(0 0 0 / 0.8);
+}
+
+/* Things lying on the desk drift a little, as if someone keeps nudging the table. */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-7px) rotate(calc(var(--tilt, 0deg) * -0.5));
+  }
+}
+.bob {
+  animation: bob 5.6s ease-in-out infinite;
+  transform: rotate(var(--tilt, 0deg));
+}
+
+/* Paper scraps tumbling out once (end of a focus round). */
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) rotate(0deg) scale(0.6);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(var(--dy) + 60px)) rotate(var(--rot)) scale(1);
+  }
+}
+.confetti {
+  animation: confetti 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ---------- Pen marks ---------- */
@@ -410,6 +506,9 @@
 @media (prefers-reduced-motion: reduce) {
   .swipe::before,
   .pen-draw,
+  .bob,
+  .hand-bounce,
+  .confetti,
   .arrive,
   .live-dot,
   .typing-dot,

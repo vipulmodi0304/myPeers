@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, m } from "motion/react";
-import { MapPin, MessageCircle, Search, Users } from "lucide-react";
+import { MapPin, MessageCircle, Search } from "lucide-react";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CourseInput } from "@/components/CourseInput";
+import { Burst, Sleepy } from "@/components/doodles";
 import { Avatar, Button, CourseTag, Empty, Field, Input, PageHeader, Spinner, StatusPill } from "@/components/ui";
 import { api, errorMessage } from "@/lib/api";
 import { courseVars } from "@/lib/courseColor";
@@ -20,6 +21,8 @@ export default function PeersPage() {
   const { data: peers = [], isLoading: peersLoading, arrived } = useLivePeers();
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState("");
+  // Checking in (not editing) gets a little burst of pen marks around your check-in.
+  const [celebrate, setCelebrate] = useState(false);
 
   const myCourse = checkIn?.courseCode ?? null;
   const sameCourse = myCourse ? peers.filter((p) => p.courseCode === myCourse).length : 0;
@@ -50,9 +53,18 @@ export default function PeersPage() {
         {isLoading ? (
           <div className="h-[72px]" />
         ) : !checkIn || editing ? (
-          <CheckInForm current={checkIn ?? null} onDone={() => setEditing(false)} />
+          <CheckInForm
+            current={checkIn ?? null}
+            onDone={(isNew) => {
+              setEditing(false);
+              if (isNew) {
+                setCelebrate(true);
+                setTimeout(() => setCelebrate(false), 2000);
+              }
+            }}
+          />
         ) : (
-          <MyCheckIn checkIn={checkIn} onEdit={() => setEditing(true)} />
+          <MyCheckIn checkIn={checkIn} onEdit={() => setEditing(true)} celebrate={celebrate} />
         )}
       </div>
 
@@ -63,7 +75,7 @@ export default function PeersPage() {
 
 /* ---------------- Your check-in ---------------- */
 
-function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => void }) {
+function CheckInForm({ current, onDone }: { current: Peer | null; onDone: (isNew?: boolean) => void }) {
   const qc = useQueryClient();
   const [courseCode, setCourse] = useState(current?.courseCode ?? "");
   const [topic, setTopic] = useState(current?.topic ?? "");
@@ -74,7 +86,7 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
     onSuccess: ({ checkIn }) => {
       qc.setQueryData(checkInKey, checkIn);
       toast.success(current ? "Check-in updated" : `Checked in to ${checkIn.courseCode}`);
-      onDone();
+      onDone(!current);
     },
   });
 
@@ -129,7 +141,7 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
             {current ? "Save changes" : "Check in"}
           </Button>
           {current ? (
-            <Button type="button" variant="ghost" onClick={onDone}>
+            <Button type="button" variant="ghost" onClick={() => onDone()}>
               Cancel
             </Button>
           ) : null}
@@ -140,7 +152,7 @@ function CheckInForm({ current, onDone }: { current: Peer | null; onDone: () => 
 }
 
 /** Your check-in as a slim status bar, edged in your course colour. */
-function MyCheckIn({ checkIn, onEdit }: { checkIn: Peer; onEdit: () => void }) {
+function MyCheckIn({ checkIn, onEdit, celebrate }: { checkIn: Peer; onEdit: () => void; celebrate?: boolean }) {
   const qc = useQueryClient();
   const now = useNow();
 
@@ -162,8 +174,13 @@ function MyCheckIn({ checkIn, onEdit }: { checkIn: Peer; onEdit: () => void }) {
     <section
       aria-label="Your check-in"
       style={courseVars(checkIn.courseCode)}
-      className="flex flex-col gap-3 rounded-xl border-2 border-ink p-4 sm:flex-row sm:items-center"
+      className="relative flex flex-col gap-3 rounded-xl border-2 border-ink p-4 sm:flex-row sm:items-center"
     >
+      {celebrate ? (
+        <span className="absolute top-1/2 left-16">
+          <Burst colors={["var(--pen)", "var(--course-ink)", "var(--c6-ink)"]} />
+        </span>
+      ) : null}
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <CourseTag code={checkIn.courseCode} size="lg" swipe />
         <div className="min-w-0">
@@ -254,7 +271,7 @@ function PeerBoard({
   if (peers.length === 0) {
     return (
       <div className="mt-8 rounded-xl border-[1.5px] border-dashed border-rule-strong">
-        <Empty icon={<Users className="size-7" />} title="It's quiet right now">
+        <Empty icon={<Sleepy size={64} />} title="It's quiet right now">
           When classmates check in they show up here instantly, grouped by course. Send the link to your study group to get it going.
         </Empty>
       </div>
@@ -346,7 +363,15 @@ function PeerRow({ peer, now, arrived }: { peer: Peer; now: number; arrived: boo
       className={cn("group flex items-center gap-3 py-3 sm:px-2 lg:grid lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,13rem)_4.5rem_auto] lg:gap-5", arrived && "arrive")}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar name={peer.name} size={36} course={peer.courseCode} />
+        {/* A classmate who just checked in pops onto the board. */}
+        <m.span
+          initial={arrived ? { scale: 0.2, rotate: -25 } : false}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 520, damping: 12 }}
+          className="inline-flex"
+        >
+          <Avatar name={peer.name} size={36} course={peer.courseCode} />
+        </m.span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2.5">
             <span className="text-[14.5px] font-semibold">{peer.name}</span>
