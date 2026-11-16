@@ -63,7 +63,7 @@ If verification is on but no provider is configured, the server refuses to start
 - **Turn email verification on** (step 6). With it off, anyone can sign up as any McGill address without proving they own it.
 - **Keep it at one instance.** Who's online, room state and rate limits live in the server's memory. `railway.json` pins the replica count to 1; don't raise it. One instance comfortably handles a few hundred students.
 - **Set `ADMIN_EMAIL`** so reports reach you. They are also saved in the `reports` table (`select * from reports order by created_at desc`).
-- **Turn on database backups.** Railway → the Postgres service → **Backups** → enable a daily schedule. The upload volume can be backed up the same way.
+- **Turn on database backups.** Railway → `mypeers-db` → **Backups** → enable a daily schedule (needs the Pro plan). The upload volume can be backed up the same way.
 - **Watch the logs for the first evening.** Anything logged at `error` level is a bug or an outage; requests answered with `429` mean someone hit a rate limit.
 
 The service restarts itself after a crash (`restartPolicyType: ALWAYS` in `railway.json`), and it keeps running through a database restart.
