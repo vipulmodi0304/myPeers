@@ -13,6 +13,10 @@ export type Realtime = {
   /** Re-broadcast a user's check-in to everyone who can see it. */
   checkInChanged(userId: string): Promise<void>;
   isLive(userId: string): boolean;
+  /** Close every open socket of a user (password change, account deletion). */
+  disconnectUser(userId: string): void;
+  /** Take a user's sockets out of a study room they are no longer a member of. */
+  leaveRoom(userId: string, roomId: string): void;
 };
 
 export type User = {

@@ -32,10 +32,13 @@ export async function setup(overrides: Record<string, string> = {}) {
   const mailer: Mailer = { send: async (to, subject, text) => void outbox.push({ to, subject, text }) };
   const pushed: { to: string; event: string; payload: unknown }[] = [];
   const live = new Set<string>(botIds);
+  const kicked: string[] = [];
   const realtime = {
     ...noopRealtime((id) => live.has(id)),
     toUser: (to: string, event: string, payload: unknown) => void pushed.push({ to, event, payload }),
     toRoom: (to: string, event: string, payload: unknown) => void pushed.push({ to, event, payload }),
+    disconnectUser: (id: string) => void kicked.push(id),
+    leaveRoom: (to: string, roomId: string) => void pushed.push({ to, event: "leaveRoom", payload: roomId }),
   };
   const ctx: AppContext = { config, db, mailer, realtime };
   const app = createApp(ctx);
@@ -55,5 +58,5 @@ export async function setup(overrides: Record<string, string> = {}) {
     return mail?.text.match(/\b(\d{6})\b/)?.[1] ?? "";
   }
 
-  return { app, ctx, db, outbox, pushed, live, botIds, student, lastCode, close: () => db.close() };
+  return { app, ctx, db, outbox, pushed, live, kicked, botIds, student, lastCode, close: () => db.close() };
 }

@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
+import { meKey } from "./auth";
 
 type SocketState = { socket: Socket | null; connected: boolean };
 const SocketContext = createContext<SocketState>({ socket: null, connected: false });
@@ -25,7 +26,17 @@ export function SocketProvider({ enabled, children }: { enabled: boolean; childr
       if (!firstConnect) void qc.invalidateQueries();
       firstConnect = false;
     });
-    socket.on("disconnect", () => setState({ socket, connected: false }));
+    socket.on("disconnect", (reason) => {
+      setState({ socket, connected: false });
+      // The server closes sockets when a password changes. Socket.IO doesn't retry
+      // after that on its own, so reconnect: a still-valid session gets back in.
+      if (reason === "io server disconnect") socket.connect();
+    });
+    // The session behind this socket is gone (signed out elsewhere, expired): re-check who we are,
+    // which sends the user to the sign-in page.
+    socket.on("connect_error", (err) => {
+      if (err.message === "unauthorized" || err.message === "unverified") void qc.invalidateQueries({ queryKey: meKey });
+    });
     setState({ socket, connected: false });
     return () => {
       socket.disconnect();

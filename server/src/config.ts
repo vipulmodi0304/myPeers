@@ -20,12 +20,14 @@ const schema = z.object({
   MAX_UPLOAD_MB: z.coerce.number().positive().max(25).default(10),
   // Only emails ending in this domain may sign up.
   ALLOWED_EMAIL_DOMAIN: z.string().default("mail.mcgill.ca"),
-  REQUIRE_EMAIL_VERIFICATION: bool.default("true"),
+  REQUIRE_EMAIL_VERIFICATION: bool.default(true),
   EMAIL_PROVIDER: z.enum(["log", "brevo", "resend"]).default("log"),
   EMAIL_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   EMAIL_FROM_NAME: z.string().default("myPeers"),
-  DEMO_ENABLED: bool.default("true"),
+  // Where "Report" notifications go. Reports are always saved in the reports table; this also emails them.
+  ADMIN_EMAIL: z.string().email().optional(),
+  DEMO_ENABLED: bool.default(true),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

@@ -7,11 +7,15 @@ import { createDb } from "./db/pool.js";
 import { createMailer } from "./lib/email.js";
 import { logger } from "./logger.js";
 import { attachRealtime, noopRealtime } from "./realtime/index.js";
+import { sweepUploads } from "./routes/uploads.js";
 import { cleanupDemoVisitors, ensureDemoBots } from "./services/demo.js";
 
 async function main() {
   const config = loadConfig();
   const db = createDb(config.DATABASE_URL);
+  if (config.NODE_ENV === "production" && !config.REQUIRE_EMAIL_VERIFICATION) {
+    logger.warn("REQUIRE_EMAIL_VERIFICATION is off: anyone can sign up as any address without proving they own it");
+  }
 
   // Apply any pending schema changes before taking traffic.
   const applied = await migrate(db);
@@ -32,6 +36,13 @@ async function main() {
       await db.query("delete from email_codes where expires_at < now() - interval '1 day'");
       const removed = await cleanupDemoVisitors(db);
       if (removed) logger.info({ removed }, "Removed expired demo guests");
+      // Rooms whose last member deleted their account (leaving normally already removes the room).
+      await db.query(
+        `delete from rooms r where r.created_at < now() - interval '1 hour'
+            and not exists (select 1 from room_members m where m.room_id = r.id)`,
+      );
+      const files = await sweepUploads(ctx);
+      if (files) logger.info({ files }, "Removed orphaned upload files");
     } catch (err) {
       logger.error({ err }, "Cleanup failed");
     }
@@ -50,12 +61,16 @@ async function main() {
     shuttingDown = true;
     logger.info({ signal }, "Shutting down");
     clearInterval(sweepTimer);
+    // If a connection refuses to close, exit anyway before the platform kills us mid-write.
+    setTimeout(() => process.exit(0), 8000).unref();
     await realtime.close();
     await db.close();
     process.exit(0);
   };
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
   process.on("SIGINT", () => void shutdown("SIGINT"));
+  // One failed background task shouldn't take every connected student offline.
+  process.on("unhandledRejection", (err) => logger.error({ err }, "Unhandled promise rejection"));
 }
 
 main().catch((err) => {

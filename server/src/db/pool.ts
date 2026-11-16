@@ -1,4 +1,5 @@
 import pg from "pg";
+import { logger } from "../logger.js";
 
 /**
  * A thin layer over node-postgres. Every query is parameterized ($1, $2, ...)
@@ -48,8 +49,14 @@ export function createDb(connectionString: string): Db {
   const pool = new pg.Pool({
     connectionString,
     max: 10,
+    connectionTimeoutMillis: 10_000,
+    // A stuck query must not hold one of the 10 connections forever.
+    statement_timeout: 15_000,
     // Railway's internal Postgres does not use TLS; external URLs usually do.
     ssl: /sslmode=require/.test(connectionString) ? { rejectUnauthorized: false } : undefined,
   });
+  // Idle connections die when Postgres restarts. Without a listener that is an
+  // uncaught 'error' event and takes the whole server down; the pool reconnects by itself.
+  pool.on("error", (err) => logger.error({ err }, "Idle database connection failed"));
   return wrap(pool, pool);
 }

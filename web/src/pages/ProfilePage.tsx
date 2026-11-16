@@ -1,10 +1,11 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar, Button, Dialog, Field, Input } from "@/components/ui";
 import { api, errorMessage } from "@/lib/api";
 import { useMe, useSetMe } from "@/lib/auth";
+import { useSetBlock } from "@/lib/blocks";
 import type { Me } from "@/lib/types";
 
 export default function ProfilePage() {
@@ -20,6 +21,7 @@ export default function ProfilePage() {
         </div>
       </div>
       <NameForm me={me} />
+      <BlockedPeople />
       {me.isDemo ? (
         <section className="rounded-xl bg-paper-2 p-5 sm:p-6">
           <h2 className="heading text-[22px]">
@@ -78,6 +80,30 @@ function NameForm({ me }: { me: Me }) {
           Save name
         </Button>
       </form>
+    </Section>
+  );
+}
+
+function BlockedPeople() {
+  const setBlock = useSetBlock();
+  const { data } = useQuery({
+    queryKey: ["blocks"],
+    queryFn: async () => (await api.get<{ blocked: { id: string; name: string }[] }>("/api/blocks")).blocked,
+  });
+  if (!data?.length) return null;
+  return (
+    <Section title="Blocked people" description="You and the people here can't message or see each other on the Study now page.">
+      <ul className="divide-y divide-rule border-y border-rule">
+        {data.map((u) => (
+          <li key={u.id} className="flex items-center gap-3 py-2.5">
+            <Avatar name={u.name} size={28} />
+            <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{u.name}</span>
+            <Button variant="secondary" size="sm" onClick={() => setBlock.mutate({ id: u.id, name: u.name, block: false })}>
+              Unblock
+            </Button>
+          </li>
+        ))}
+      </ul>
     </Section>
   );
 }

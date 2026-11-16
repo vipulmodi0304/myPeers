@@ -11,7 +11,6 @@ type RoomRow = {
   code: string;
   name: string;
   course_code: string | null;
-  created_by: string;
   is_demo: boolean;
   created_at: Date;
   timer: TimerState;
@@ -29,7 +28,7 @@ export function roomRoutes(ctx: AppContext) {
 
   async function findRoom(code: string, viewer: User) {
     const room = await db.one<RoomRow>(
-      "select id, code, name, course_code, created_by, is_demo, created_at, timer from rooms where code = $1",
+      "select id, code, name, course_code, is_demo, created_at, timer from rooms where code = $1",
       [codeParam.parse(code)],
     );
     // Demo and real rooms are invisible to each other.
@@ -50,20 +49,19 @@ export function roomRoutes(ctx: AppContext) {
     return rows.map((r) => ({ ...r, live: ctx.realtime.isLive(r.id) }));
   }
 
-  const summary = (r: RoomRow, memberCount: number) => ({
+  const summary = (r: Omit<RoomRow, "timer">, memberCount: number) => ({
     id: r.id,
     code: r.code,
     name: r.name,
     courseCode: r.course_code,
     memberCount,
-    createdBy: r.created_by,
     createdAt: r.created_at.toISOString(),
   });
 
   // Rooms I belong to, most recently active first.
   router.get("/", async (req, res) => {
-    const rows = await db.query<RoomRow & { member_count: number; last_activity: Date | null }>(
-      `select r.id, r.code, r.name, r.course_code, r.created_by, r.is_demo, r.created_at, r.timer,
+    const rows = await db.query<Omit<RoomRow, "timer"> & { member_count: number; last_activity: Date | null }>(
+      `select r.id, r.code, r.name, r.course_code, r.is_demo, r.created_at,
               mc.n as member_count, la.at as last_activity
          from rooms r
          join room_members m on m.room_id = r.id and m.user_id = $1
@@ -84,6 +82,7 @@ export function roomRoutes(ctx: AppContext) {
         courseCode: z
           .string()
           .trim()
+          .max(16, "Use a course code like COMP 251.")
           .transform((c) => (c ? normalizeCourse(c) : null))
           .nullable()
           .optional(),
@@ -92,15 +91,18 @@ export function roomRoutes(ctx: AppContext) {
 
     // Codes are random; on the rare collision, just try another.
     for (let attempt = 0; attempt < 5; attempt++) {
-      const room = await db.one<RoomRow>(
-        `insert into rooms (code, name, course_code, created_by, is_demo) values ($1, $2, $3, $4, $5)
-         on conflict (code) do nothing
-         returning id, code, name, course_code, created_by, is_demo, created_at, timer`,
-        [newRoomCode(), input.name, input.courseCode ?? null, req.user!.id, req.user!.is_demo],
-      );
-      if (!room) continue;
-      await db.query("insert into room_members (room_id, user_id) values ($1, $2)", [room.id, req.user!.id]);
-      return void res.status(201).json({ room: summary(room, 1) });
+      const room = await db.transaction(async (tx) => {
+        const room = await tx.one<RoomRow>(
+          `insert into rooms (code, name, course_code, created_by, is_demo) values ($1, $2, $3, $4, $5)
+           on conflict (code) do nothing
+           returning id, code, name, course_code, is_demo, created_at, timer`,
+          [newRoomCode(), input.name, input.courseCode ?? null, req.user!.id, req.user!.is_demo],
+        );
+        // Same transaction, so a room never exists without its first member.
+        if (room) await tx.query("insert into room_members (room_id, user_id) values ($1, $2)", [room.id, req.user!.id]);
+        return room;
+      });
+      if (room) return void res.status(201).json({ room: summary(room, 1) });
     }
     throw new Error("Could not generate a unique room code");
   });
@@ -132,6 +134,7 @@ export function roomRoutes(ctx: AppContext) {
   router.delete("/:code/membership", async (req, res) => {
     const room = await findRoom(req.params.code, req.user!);
     await db.query("delete from room_members where room_id = $1 and user_id = $2", [room.id, req.user!.id]);
+    ctx.realtime.leaveRoom(req.user!.id, room.id); // their open tabs stop receiving the room
     const list = await members(room.id);
     // The last person out turns off the lights.
     if (list.length === 0) await db.query("delete from rooms where id = $1", [room.id]);
