@@ -67,17 +67,19 @@ One Node process serves the React app, the REST API and the WebSocket server on 
 | Login | Random token in an `httpOnly`, `SameSite=Lax` cookie; the DB stores only its SHA-256 hash | JavaScript can't read the token, and a leaked database can't be used to log in. |
 | CSRF | SameSite cookies plus an `Origin` check on every write | Browsers always send `Origin` on cross-site writes. |
 | Email codes | Hashed, expire in 15 minutes, burned after 5 wrong guesses, 45s resend cooldown | A 6-digit code can't be brute forced. |
+| Abuse limits | Rate limits counted per account (per email for sign-in attempts), with only a loose per-address ceiling | Most students share a few campus Wi-Fi addresses, so strict per-IP limits would lock out a whole library. |
+| Safety | Anyone can block or report anyone from a conversation. A block hides both people from each other and stops messages both ways; reports are saved and emailed to the admin. | Real students need a way out of an unwanted conversation before launch, not after. |
 | File sharing | Random filename on disk, type checked by magic bytes, served only to the sender and recipient, images served with a sandbox CSP | A file named `.png` that is really HTML can't run in our origin. |
 | Demo mode | Separate "world": demo users only see demo users and demo rooms, guests are deleted after 24h | Recruiters can try everything without ever seeing or touching real student data. |
 
-**Scaling note.** Presence and room state live in one process's memory, which is right for a single instance. Running several instances would need the Socket.IO Redis adapter and a shared presence store.
+**Scaling note.** Presence and room state live in one process's memory, which is right for a single instance. Running several instances would need the Socket.IO Redis adapter and a shared presence and rate-limit store. One instance is plenty for a few hundred students: 200 simultaneous users (each with an open socket, all checking in and messaging at the same instant) are served in well under a second per request on a laptop.
 
 ## Tech stack
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, Motion, React Router, TanStack Query, Radix UI primitives, Socket.IO client
 - **Backend:** Node.js 22, Express 5, Socket.IO, PostgreSQL via `pg` with hand-written SQL migrations, zod validation, bcrypt, helmet, pino
-- **Testing:** Vitest + Supertest against a real Postgres, plus Socket.IO integration tests (39 tests)
-- **Ops:** Docker, Railway
+- **Testing:** Vitest + Supertest against a real Postgres, plus Socket.IO integration tests (47 tests)
+- **Ops:** Docker, Railway, GitHub Actions (lint, typecheck, tests, build, dependency audit)
 
 ## Run it locally
 
@@ -118,7 +120,7 @@ server/
   data/            McGill course catalogue (searched server-side)
   src/
     auth/          sessions (cookies) and email codes
-    routes/        REST endpoints: auth, me, check-ins, messages, uploads, rooms
+    routes/        REST endpoints: auth, me, check-ins, messages, uploads, rooms, users (block/report)
     realtime/      Socket.IO server, presence, timer and whiteboard logic
     services/      peers (visibility rules) and demo mode
 web/src/

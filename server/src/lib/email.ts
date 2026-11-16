@@ -22,6 +22,7 @@ export function createMailer(config: Config): Mailer {
       if (config.EMAIL_PROVIDER === "brevo") {
         response = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
+          signal: AbortSignal.timeout(10_000),
           headers: { "api-key": config.EMAIL_API_KEY!, "content-type": "application/json" },
           body: JSON.stringify({
             sender: { email: config.EMAIL_FROM, name: config.EMAIL_FROM_NAME },
@@ -33,6 +34,7 @@ export function createMailer(config: Config): Mailer {
       } else {
         response = await fetch("https://api.resend.com/emails", {
           method: "POST",
+          signal: AbortSignal.timeout(10_000),
           headers: { authorization: `Bearer ${config.EMAIL_API_KEY}`, "content-type": "application/json" },
           body: JSON.stringify({ from: `${config.EMAIL_FROM_NAME} <${config.EMAIL_FROM}>`, to, subject, text }),
         });

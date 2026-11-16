@@ -1,13 +1,15 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, FileText, Paperclip, SendHorizontal, X } from "lucide-react";
+import { ArrowLeft, Ban, FileText, Flag, MoreVertical, Paperclip, SendHorizontal, X } from "lucide-react";
+import { DropdownMenu } from "radix-ui";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { NoteDoodle, Smiley } from "@/components/doodles";
-import { Avatar, Button, CourseTag, Empty, Spinner } from "@/components/ui";
+import { Avatar, Button, CourseTag, Dialog, Empty, Field, inputClass, Spinner } from "@/components/ui";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { useMe } from "@/lib/auth";
+import { useSetBlock } from "@/lib/blocks";
 import { clock, cn, fileSize, shortTime } from "@/lib/format";
 import { useSocket, useSocketEvent } from "@/lib/socket";
 import type { Attachment, Conversation, Message, Thread } from "@/lib/types";
@@ -107,6 +109,7 @@ function ThreadView({ otherId }: { otherId: string }) {
   const scroller = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
   const [typing, setTyping] = useState(false);
+  const setBlock = useSetBlock();
 
   // Pages of 50, newest page first; "Load earlier" fetches older pages.
   const thread = useInfiniteQuery({
@@ -210,6 +213,7 @@ function ThreadView({ otherId }: { otherId: string }) {
                 )}
               </p>
             </div>
+            <ThreadMenu other={other} canReport={!me?.isDemo} />
           </>
         ) : (
           <div className="h-10" />
@@ -291,15 +295,101 @@ function ThreadView({ otherId }: { otherId: string }) {
         ) : null}
       </div>
 
-      <Composer
-        otherId={otherId}
-        canAttach={!me?.isDemo}
-        onSent={(m) => {
-          stickToBottom.current = true;
-          append(m);
-        }}
-      />
+      {other?.blocked ? (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-rule bg-paper-2 px-4 py-3 text-[14px] text-ink-2 md:px-6">
+          <span>You blocked {other.name.split(" ")[0]}. You can't message each other.</span>
+          <Button variant="secondary" size="sm" loading={setBlock.isPending} onClick={() => setBlock.mutate({ id: other.id, name: other.name, block: false })}>
+            Unblock
+          </Button>
+        </div>
+      ) : (
+        <Composer
+          otherId={otherId}
+          canAttach={!me?.isDemo}
+          onSent={(m) => {
+            stickToBottom.current = true;
+            append(m);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/** Block and report, tucked behind a menu in the conversation header. */
+function ThreadMenu({ other, canReport }: { other: Thread["user"]; canReport: boolean }) {
+  const setBlock = useSetBlock();
+  const [reporting, setReporting] = useState(false);
+  const [reason, setReason] = useState("");
+  const first = other.name.split(" ")[0];
+  const report = useMutation({
+    mutationFn: () => api.post(`/api/users/${other.id}/report`, { reason }),
+    onSuccess: () => {
+      setReporting(false);
+      setReason("");
+      toast.success("Report sent. Thank you for telling us.");
+    },
+  });
+  const item = "flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[14px] outline-none data-[highlighted]:bg-paper-2";
+
+  return (
+    <>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <Button variant="ghost" size="icon" className="ml-auto shrink-0" aria-label={`More options for ${other.name}`}>
+            <MoreVertical className="size-5" />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="end" sideOffset={6} className="anim-menu z-50 w-56 rounded-[10px] border border-rule-strong bg-paper p-1.5 shadow-sheet">
+            <DropdownMenu.Item className={item} onSelect={() => setBlock.mutate({ id: other.id, name: other.name, block: !other.blocked })}>
+              <Ban className="size-4 text-ink-2" /> {other.blocked ? `Unblock ${first}` : `Block ${first}`}
+            </DropdownMenu.Item>
+            {canReport ? (
+              <DropdownMenu.Item className={`${item} text-red`} onSelect={() => setReporting(true)}>
+                <Flag className="size-4" /> Report {first}
+              </DropdownMenu.Item>
+            ) : null}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+
+      <Dialog
+        open={reporting}
+        onOpenChange={setReporting}
+        title={`Report ${other.name}`}
+        description="Tell us what happened. Reports go to the person who runs myPeers, and they aren't told who you are."
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (reason.trim()) report.mutate();
+          }}
+        >
+          <Field label="What happened?" htmlFor="report-reason" error={report.error ? errorMessage(report.error) : null}>
+            <textarea
+              id="report-reason"
+              rows={4}
+              maxLength={1000}
+              required
+              autoFocus
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className={cn(inputClass, "h-auto resize-none py-2.5")}
+            />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setReporting(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="red" loading={report.isPending} disabled={!reason.trim()}>
+              Send report
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </>
   );
 }
 

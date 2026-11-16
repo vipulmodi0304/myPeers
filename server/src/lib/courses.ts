@@ -7,13 +7,11 @@ import path from "node:path";
  * the old version did (it was most of a 700 KB bundle).
  */
 let cache: string[] | null = null;
-let lookup: Set<string> | null = null;
 
-export function allCourses(): string[] {
+function allCourses(): string[] {
   if (!cache) {
     const file = path.resolve("server/data/courses.json");
     cache = JSON.parse(readFileSync(file, "utf8")) as string[];
-    lookup = new Set(cache);
   }
   return cache;
 }
@@ -39,13 +37,4 @@ export function normalizeCourse(input: string): string {
   const s = input.toUpperCase().replace(/\s+/g, "").trim();
   const m = s.match(/^([A-Z]{3,4}\d?)(\d{3}[A-Z0-9]*)$/);
   return m ? `${m[1]} ${m[2]}` : s;
-}
-
-export function isKnownCourse(code: string): boolean {
-  allCourses();
-  return lookup!.has(code);
-}
-
-export function departmentOf(code: string): string {
-  return code.split(" ")[0] ?? code;
 }

@@ -1,10 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LazyMotion, MotionConfig } from "motion/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ApiError } from "./lib/api";
+import { meKey } from "./lib/auth";
 import { router } from "./router";
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource-variable/archivo/wdth-italic.css";
@@ -12,7 +13,15 @@ import "@fontsource/fragment-mono/400.css";
 import "@fontsource-variable/shantell-sans/full.css";
 import "./styles.css";
 
-const queryClient = new QueryClient({
+const queryClient: QueryClient = new QueryClient({
+  // A 401 while loading data means the session ended (expired, or signed out on
+  // another device). Forget the user so the router sends them to sign in,
+  // instead of leaving them on a page full of errors.
+  queryCache: new QueryCache({
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 401) queryClient.setQueryData(meKey, null);
+    },
+  }),
   defaultOptions: {
     queries: {
       // Realtime events keep data fresh, so don't refetch on every focus.

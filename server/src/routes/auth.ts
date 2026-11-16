@@ -1,11 +1,11 @@
-import bcrypt from "bcryptjs";
-import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import bcrypt from "bcrypt";
+import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import { consumeCode, sendCode } from "../auth/codes.js";
 import { endSession, startSession } from "../auth/sessions.js";
 import type { AppContext, User } from "../context.js";
 import { badRequest, conflict, forbidden, HttpError, unauthorized } from "../lib/errors.js";
+import { limit, perAccount } from "../lib/limits.js";
 import { logger } from "../logger.js";
 import { createDemoVisitor } from "../services/demo.js";
 
@@ -28,7 +28,6 @@ export const publicUser = (u: User) => ({
 export function authRoutes(ctx: AppContext) {
   const router = Router();
   const { config, db } = ctx;
-  const isTest = config.NODE_ENV === "test";
 
   const email = z
     .string()
@@ -37,9 +36,14 @@ export function authRoutes(ctx: AppContext) {
     .email("Enter a valid email.")
     .refine((e) => e.endsWith(`@${config.ALLOWED_EMAIL_DOMAIN}`), `Use your @${config.ALLOWED_EMAIL_DOMAIN} email.`);
 
-  // Brute-force protection on everything that checks a secret.
-  const strict = rateLimit({ windowMs: 15 * 60_000, limit: 30, skip: () => isTest, standardHeaders: "draft-8", legacyHeaders: false });
-  const demoLimit = rateLimit({ windowMs: 60 * 60_000, limit: 15, skip: () => isTest, standardHeaders: "draft-8", legacyHeaders: false });
+  // Brute-force protection on everything that checks a secret: a tight limit per
+  // account being tried, plus a loose one per address (loose because a whole
+  // campus shares a few addresses) to slow down trying many accounts.
+  const perAddress = limit({ windowMs: 15 * 60_000, limit: 300, skip: (req) => Boolean(req.user) });
+  const perAccountLimit = limit({ windowMs: 15 * 60_000, limit: 10, key: perAccount });
+  const strict: RequestHandler = (req, res, next) =>
+    perAddress(req, res, (err) => (err ? next(err) : perAccountLimit(req, res, next)));
+  const demoLimit = limit({ windowMs: 60 * 60_000, limit: 15 });
 
   const userColumns = "id, email, name, is_demo, email_verified_at";
 
@@ -58,6 +62,9 @@ export function authRoutes(ctx: AppContext) {
       throw conflict("An account with this email already exists. Sign in instead.", "email_taken");
     } else if (existing) {
       // Unfinished signup: whoever proves they own the inbox (via the code) gets the account.
+      // Anyone who started this signup earlier is signed out first, otherwise their
+      // session would become a way into the account once the real owner verifies.
+      await db.query("delete from auth_sessions where user_id = $1", [existing.id]);
       user = (await db.one<User>(
         `update users set name = $2, password_hash = $3 where id = $1 returning ${userColumns}`,
         [existing.id, input.name, hash],
@@ -152,6 +159,7 @@ export function authRoutes(ctx: AppContext) {
       [user.id, hash],
     ))!;
     await db.query("delete from auth_sessions where user_id = $1", [user.id]);
+    ctx.realtime.disconnectUser(user.id);
     await startSession(ctx, res, updated);
     res.json({ user: publicUser(updated) });
   });

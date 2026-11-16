@@ -1,5 +1,5 @@
-import { createReadStream } from "node:fs";
-import { mkdir, open, unlink } from "node:fs/promises";
+import { createReadStream, mkdirSync } from "node:fs";
+import { open, readdir, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
@@ -7,6 +7,7 @@ import { z } from "zod";
 import type { AppContext } from "../context.js";
 import { newToken } from "../lib/crypto.js";
 import { badRequest, forbidden, notFound } from "../lib/errors.js";
+import { limit } from "../lib/limits.js";
 
 const ALLOWED: Record<string, (b: Buffer) => boolean> = {
   "image/png": (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
@@ -28,16 +29,45 @@ async function sniff(file: string, mime: string): Promise<boolean> {
   }
 }
 
+/**
+ * Housekeeping, run hourly from index.ts:
+ * 1. forget attachments that were uploaded but never sent in a message;
+ * 2. delete files on disk that no attachment row points to any more (the row
+ *    went away above, or its owner deleted their account).
+ * Files younger than an hour are left alone: their row may not be committed yet.
+ */
+export async function sweepUploads(ctx: AppContext): Promise<number> {
+  const dir = path.resolve(ctx.config.UPLOAD_DIR);
+  await ctx.db.query(
+    `delete from attachments a where a.created_at < now() - interval '1 day'
+        and not exists (select 1 from direct_messages m where m.attachment_id = a.id)`,
+  );
+  const files = await readdir(dir).catch(() => [] as string[]);
+  if (!files.length) return 0;
+  const known = new Set((await ctx.db.query<{ storage_key: string }>("select storage_key from attachments")).map((r) => r.storage_key));
+  let removed = 0;
+  for (const name of files) {
+    if (known.has(name)) continue;
+    const file = path.join(dir, name);
+    const info = await stat(file).catch(() => null);
+    if (!info?.isFile() || Date.now() - info.mtimeMs < 3600_000) continue;
+    await unlink(file).catch(() => {});
+    removed++;
+  }
+  return removed;
+}
+
 export function uploadRoutes(ctx: AppContext) {
   const router = Router();
   const dir = path.resolve(ctx.config.UPLOAD_DIR);
+  mkdirSync(dir, { recursive: true });
+  // ponytail: a per-hour count, not a per-user byte quota. 20 files of MAX_UPLOAD_MB
+  // an hour is the ceiling one account can put on the volume; add a quota if that hurts.
+  const uploadLimit = limit({ windowMs: 3600_000, limit: 20 });
 
   const upload = multer({
     storage: multer.diskStorage({
-      destination: async (_req, _file, cb) => {
-        await mkdir(dir, { recursive: true });
-        cb(null, dir);
-      },
+      destination: dir,
       // Never trust the user's filename on disk: random name, original kept in the DB.
       filename: (_req, _file, cb) => cb(null, newToken()),
     }),
@@ -48,7 +78,7 @@ export function uploadRoutes(ctx: AppContext) {
   router.post("/", (req, _res, next) => {
     if (req.user!.is_demo) return next(forbidden("File sharing is turned off in the demo."));
     next();
-  }, upload.single("file"), async (req, res) => {
+  }, uploadLimit, upload.single("file"), async (req, res) => {
     const file = req.file;
     if (!file) throw badRequest(`Only images (PNG, JPG, GIF, WebP) and PDFs up to ${ctx.config.MAX_UPLOAD_MB} MB.`);
     if (!(await sniff(file.path, file.mimetype))) {

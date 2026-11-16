@@ -43,6 +43,8 @@ export type Thread = {
     id: string;
     name: string;
     live: boolean;
+    /** True when I have blocked this person. */
+    blocked: boolean;
     checkIn: { courseCode: string; topic: string; location: string; status: Status } | null;
   };
   messages: Message[];
@@ -55,7 +57,6 @@ export type RoomSummary = {
   name: string;
   courseCode: string | null;
   memberCount: number;
-  createdBy: string;
   createdAt: string;
   lastActivity?: string | null;
 };

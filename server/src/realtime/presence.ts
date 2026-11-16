@@ -55,8 +55,4 @@ export class Presence {
     const seen = this.lastSeen.get(userId);
     return seen !== undefined && this.now() - seen < GRACE_MS;
   }
-
-  connectedCount(): number {
-    return this.sockets.size;
-  }
 }

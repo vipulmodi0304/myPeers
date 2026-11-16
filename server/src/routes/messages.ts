@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import type { AppContext, User } from "../context.js";
-import { badRequest, notFound } from "../lib/errors.js";
+import { badRequest, forbidden } from "../lib/errors.js";
 import { demoBotIds, scheduleBotReply } from "../services/demo.js";
-import { getPeer, sameWorld } from "../services/peers.js";
+import { blockBetween, findOther, getPeer } from "../services/peers.js";
 
 type MessageRow = {
   id: string;
@@ -18,9 +18,7 @@ type MessageRow = {
   att_size: number | null;
 };
 
-export type MessageDto = ReturnType<typeof toMessageDto>;
-
-export const toMessageDto = (r: MessageRow) => ({
+const toMessageDto = (r: MessageRow) => ({
   id: r.id,
   senderId: r.sender_id,
   recipientId: r.recipient_id,
@@ -37,22 +35,13 @@ const MESSAGE_SELECT = `
          a.id as att_id, a.file_name as att_name, a.mime_type as att_mime, a.size_bytes as att_size
     from direct_messages m left join attachments a on a.id = m.attachment_id`;
 
-const uuid = z.string().uuid("Unknown user.");
-
 export function messageRoutes(ctx: AppContext) {
   const router = Router();
   const { db } = ctx;
 
-  /** The other person in a conversation, if the viewer is allowed to talk to them. */
-  async function otherUser(viewer: User, id: string) {
-    const other = await db.one<User>("select id, email, name, is_demo, email_verified_at from users where id = $1", [
-      uuid.parse(id),
-    ]);
-    if (!other || other.id === viewer.id || !sameWorld(viewer, other)) throw notFound("That person isn't on myPeers.");
-    return other;
-  }
+  const otherUser = (viewer: User, id: string) => findOther(db, viewer, id);
 
-  // Inbox: one row per person you've talked to, newest first.
+  // Inbox: one row per person you've talked to, newest first. People you blocked are left out.
   router.get("/conversations", async (req, res) => {
     const me = req.user!.id;
     const rows = await db.query<{
@@ -74,6 +63,7 @@ export function messageRoutes(ctx: AppContext) {
        select l.other_id, u.name as other_name, l.body, l.has_attachment, l.sender_id, l.created_at,
               (select count(*)::int from mine x where x.other_id = l.other_id and x.recipient_id = $1 and x.read_at is null) as unread
          from latest l join users u on u.id = l.other_id
+        where not exists (select 1 from blocks b where b.blocker_id = $1 and b.blocked_id = l.other_id)
         order by l.created_at desc
         limit 100`,
       [me],
@@ -114,12 +104,18 @@ export function messageRoutes(ctx: AppContext) {
       [req.user!.id, other.id, q.before ?? null, q.limit + 1],
     );
     const hasMore = rows.length > q.limit;
-    const checkIn = await getPeer(ctx, other.id);
+    const blocks = await db.query<{ blocker_id: string }>(
+      "select blocker_id from blocks where (blocker_id = $1 and blocked_id = $2) or (blocker_id = $2 and blocked_id = $1)",
+      [req.user!.id, other.id],
+    );
+    // A block in either direction hides what they're studying; only my own block is shown to me.
+    const checkIn = blocks.length ? null : await getPeer(ctx, other.id);
     res.json({
       user: {
         id: other.id,
         name: other.name,
-        live: ctx.realtime.isLive(other.id),
+        live: blocks.length === 0 && ctx.realtime.isLive(other.id),
+        blocked: blocks.some((b) => b.blocker_id === req.user!.id),
         checkIn: checkIn ? { courseCode: checkIn.courseCode, topic: checkIn.topic, location: checkIn.location, status: checkIn.status } : null,
       },
       messages: rows.slice(0, q.limit).reverse().map(toMessageDto),
@@ -138,6 +134,10 @@ export function messageRoutes(ctx: AppContext) {
       .refine((v) => v.body.length > 0 || v.attachmentId, "Write a message or attach a file.")
       .parse(req.body);
 
+    // Same answer whoever did the blocking, so it doesn't reveal that you were blocked.
+    if (await db.one(`select 1 where ${blockBetween("$1", "$2")}`, [me.id, other.id])) {
+      throw forbidden("You can't message this person.");
+    }
     if (input.attachmentId) {
       const owned = await db.one("select 1 from attachments where id = $1 and uploader_id = $2", [input.attachmentId, me.id]);
       if (!owned) throw badRequest("That file wasn't found. Try uploading it again.");

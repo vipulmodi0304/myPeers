@@ -12,7 +12,7 @@ import { logger } from "../logger.js";
  */
 const BOT_DOMAIN = "demo.mypeers.app";
 const GUEST_DOMAIN = "guest.mypeers.app";
-export const DEMO_TTL_HOURS = 24;
+const DEMO_TTL_HOURS = 24;
 
 const BOTS = [
   { slug: "maya", name: "Maya Chen", course: "COMP 251", topic: "A3: dynamic programming", location: "Trottier, 3rd floor", status: "studying" },
@@ -151,6 +151,12 @@ export function scheduleBotReply(ctx: AppContext, botId: string, guestId: string
 
 /** Delete guest accounts older than a day. Everything they own cascades. */
 export async function cleanupDemoVisitors(db: Db): Promise<number> {
+  // The guest's sample room still has bots in it, so it wouldn't count as empty: remove it by owner.
+  await db.query(
+    `delete from rooms r using users u
+      where r.is_demo and u.id = r.created_by and u.email like $1 and u.created_at < now() - make_interval(hours => $2)`,
+    [`%@${GUEST_DOMAIN}`, DEMO_TTL_HOURS],
+  );
   const rows = await db.query(
     `delete from users where is_demo and email like $1 and created_at < now() - make_interval(hours => $2) returning id`,
     [`%@${GUEST_DOMAIN}`, DEMO_TTL_HOURS],

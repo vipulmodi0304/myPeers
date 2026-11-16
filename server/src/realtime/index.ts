@@ -4,7 +4,7 @@ import { z } from "zod";
 import { userFromCookie } from "../auth/sessions.js";
 import type { AppContext, Realtime, User } from "../context.js";
 import { logger } from "../logger.js";
-import { getPeer, worldOf } from "../services/peers.js";
+import { blockBetween, blockedIds, getPeer, worldOf } from "../services/peers.js";
 import { GRACE_MS, Presence } from "./presence.js";
 import { applyTimerAction, initialTimer, normalizeTimer, type TimerState } from "./timer.js";
 import { addStroke, draftSchema, strokeSchema, undoStroke, type Stroke } from "./whiteboard.js";
@@ -66,11 +66,19 @@ export function attachRealtime(httpServer: HttpServer, ctx: AppContext, botIds: 
     toUser: (userId, event, payload) => void io.to(`user:${userId}`).emit(event, payload),
     toRoom: (roomId, event, payload) => void io.to(`room:${roomId}`).emit(event, payload),
     isLive: (userId) => presence.isLive(userId),
+    disconnectUser: (userId) => void io.in(`user:${userId}`).disconnectSockets(true),
+    leaveRoom(userId, roomId) {
+      for (const id of io.sockets.adapter.rooms.get(`user:${userId}`) ?? []) {
+        const socket = io.sockets.sockets.get(id);
+        if (socket) leaveRoom(socket, roomId);
+      }
+    },
     async checkInChanged(userId) {
       const peer = await getPeer(ctx, userId);
       if (peer && presence.isLive(userId)) {
         const { world, ...dto } = peer;
-        io.to(`world:${world}`).emit("peer:upsert", dto);
+        const hidden = (await blockedIds(db, userId)).map((id) => `user:${id}`);
+        io.to(`world:${world}`).except(hidden).emit("peer:upsert", dto);
       } else {
         const user = await db.one<{ is_demo: boolean }>("select is_demo from users where id = $1", [userId]);
         io.to(`world:${user ? worldOf(user) : "real"}`).emit("peer:remove", { userId });
@@ -271,9 +279,13 @@ export function attachRealtime(httpServer: HttpServer, ctx: AppContext, botIds: 
 
     const typing = z.object({ toUserId: z.string().uuid() });
     on("dm:typing", typing, 2, async ({ toUserId }) => {
-      const other = await db.one<{ is_demo: boolean }>("select is_demo from users where id = $1", [toUserId]);
+      const other = await db.one<{ is_demo: boolean }>(
+        `select is_demo from users where id = $1 and not ${blockBetween("$1", "$2")}`,
+        [toUserId, user.id],
+      );
       if (other && other.is_demo === user.is_demo) realtime.toUser(toUserId, "dm:typing", { userId: user.id });
     });
+    // No world check needed here: "stop" only clears an indicator the check above already gated.
     on("dm:typing-stop", typing, 4, ({ toUserId }) => realtime.toUser(toUserId, "dm:typing-stop", { userId: user.id }));
 
     socket.on("disconnect", () => {
@@ -302,5 +314,7 @@ export function noopRealtime(live: (userId: string) => boolean = () => false): R
     toRoom: () => {},
     checkInChanged: async () => {},
     isLive: live,
+    disconnectUser: () => {},
+    leaveRoom: () => {},
   };
 }
